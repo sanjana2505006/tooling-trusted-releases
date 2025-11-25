@@ -19,7 +19,7 @@ import inspect
 import logging
 import logging.handlers
 import queue
-from typing import Any, Final
+from typing import Final
 
 PERFORMANCE: logging.Logger | None = None
 
@@ -57,43 +57,42 @@ def caller_name(depth: int = 1) -> str:
     return name
 
 
-def critical(msg: str, *args: Any, **kwargs: Any) -> None:
-    _event(logging.CRITICAL, msg, *args, **kwargs)
+def critical(msg: str) -> None:
+    _event(logging.CRITICAL, msg)
 
 
-def debug(msg: str, *args: Any, **kwargs: Any) -> None:
-    _event(logging.DEBUG, msg, *args, **kwargs)
+def debug(msg: str) -> None:
+    _event(logging.DEBUG, msg)
 
 
-def error(msg: str, *args: Any, **kwargs: Any) -> None:
-    _event(logging.ERROR, msg, *args, **kwargs)
+def error(msg: str) -> None:
+    _event(logging.ERROR, msg)
 
 
-def exception(msg: str, *args: Any, **kwargs: Any) -> None:
-    kwargs.setdefault("exc_info", True)
-    _event(logging.ERROR, msg, *args, **kwargs)
+def exception(msg: str) -> None:
+    _event(logging.ERROR, msg, exc_info=True)
 
 
-def info(msg: str, *args: Any, **kwargs: Any) -> None:
-    _event(logging.INFO, msg, *args, **kwargs)
+def info(msg: str) -> None:
+    _event(logging.INFO, msg)
 
 
 def interface_name(depth: int = 1) -> str:
     return caller_name(depth=depth)
 
 
-def log(level: int, msg: str, *args: Any, **kwargs: Any) -> None:
+def log(level: int, msg: str) -> None:
     # Custom log level
-    _event(level, msg, *args, **kwargs)
+    _event(level, msg)
 
 
 def python_repr(object_name: str) -> str:
     return f"<{object_name}>"
 
 
-def performance(msg: str, *args: Any, **kwargs: Any) -> None:
+def performance(msg: str) -> None:
     if PERFORMANCE is not None:
-        PERFORMANCE.info(msg, *args, **kwargs)
+        PERFORMANCE.info(msg)
 
 
 def performance_init() -> None:
@@ -101,7 +100,7 @@ def performance_init() -> None:
     PERFORMANCE = _performance_logger()
 
 
-def secret(msg: str, data: bytes, *args: Any, **kwargs: Any) -> None:
+def secret(msg: str, data: bytes) -> None:
     import base64
 
     import nacl.encoding as encoding
@@ -120,22 +119,28 @@ def secret(msg: str, data: bytes, *args: Any, **kwargs: Any) -> None:
     )
     ciphertext = public.SealedBox(recipient_pk).encrypt(data)
     encoded_ciphertext = base64.b64encode(ciphertext).decode("ascii")
-    _event(logging.INFO, f"{msg} {encoded_ciphertext}", *args, **kwargs)
+    _event(logging.INFO, f"{msg} {encoded_ciphertext}")
 
 
-def warning(msg: str, *args: Any, **kwargs: Any) -> None:
-    _event(logging.WARNING, msg, *args, **kwargs)
+def warning(msg: str) -> None:
+    _event(logging.WARNING, msg)
 
 
 def _caller_logger(depth: int = 1) -> logging.Logger:
     return logging.getLogger(caller_name(depth))
 
 
-def _event(level: int, msg: str, *args: Any, stacklevel: int = 3, **kwargs: Any) -> None:
+def _event(level: int, msg: str, stacklevel: int = 3, exc_info: bool = False) -> None:
     logger = _caller_logger(depth=3)
     # Stack level 1 is *here*, 2 is the caller, 3 is the caller of the caller
     # I.e. _event (1), log.* (2), actual caller (3)
-    logger.log(level, msg, *args, stacklevel=stacklevel, **kwargs)
+    # TODO: We plan to use t-strings instead of the present f-strings for all logging calls
+    # To do so, however, we first need to migrate to Python 3.14
+    # https://github.com/apache/tooling-trusted-releases/issues/339
+    # https://github.com/apache/tooling-trusted-releases/issues/346
+    # The stacklevel and exc_info keyword arguments are not available as parameters
+    # Therefore this should be safe even with an untrusted msg template
+    logger.log(level, msg, stacklevel=stacklevel, exc_info=exc_info)
 
 
 def _performance_logger() -> logging.Logger:

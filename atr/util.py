@@ -848,7 +848,7 @@ async def task_archive_url(task_mid: str, recipient: str | None = None) -> str |
             return None
         return "https://lists.apache.org/thread/" + mid
     except Exception:
-        log.exception("Failed to get archive URL for task %s", task_mid)
+        log.exception(f"Failed to get archive URL for task {task_mid}")
         return None
 
 
@@ -884,13 +884,13 @@ async def thread_messages(
 
     async for url, status, content in get_urls_as_completed(email_urls):
         if status != 200 or not content:
-            log.warning("Failed to fetch email data from %s: %s", url, status)
+            log.warning(f"Failed to fetch email data from {url}: {status}")
             continue
         try:
             msg_json = json.loads(content.decode())
             messages.append(msg_json)
         except Exception as exc:
-            log.warning("Failed to parse email JSON from %s: %s", url, exc)
+            log.warning(f"Failed to parse email JSON from {url}: {exc}")
 
     messages.sort(key=lambda m: m.get("epoch", 0))
 

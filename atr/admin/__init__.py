@@ -144,7 +144,7 @@ async def browse_as_post(session: web.Committer, browse_form: BrowseAsUserForm) 
     ldap_projects_data = await apache.get_ldap_projects_data()
     committee_data = await apache.get_active_committee_data()
     ldap_data = ldap_params.results_list[0]
-    log.info("Current ASFQuart session data: %s", current_session)
+    log.info(f"Current ASFQuart session data: {current_session}")
     new_session_data = _session_data(
         ldap_data,
         new_uid,
@@ -154,7 +154,7 @@ async def browse_as_post(session: web.Committer, browse_form: BrowseAsUserForm) 
         bind_dn,
         bind_password,
     )
-    log.info("New Quart cookie (not ASFQuart session) data: %s", new_session_data)
+    log.info(f"New Quart cookie (not ASFQuart session) data: {new_session_data}")
     asfquart.session.write(new_session_data)
 
     await quart.flash(
@@ -538,7 +538,7 @@ async def keys_update_post(session: web.Committer) -> str | web.WerkzeugResponse
         }, 200
     except Exception as e:
         detail = _format_exception_location(e)
-        log.exception("Failed to start key update process: %s", detail)
+        log.exception(f"Failed to start key update process: {detail}")
         return {
             "message": f"Failed to update keys: {detail}",
             "category": "error",
@@ -583,7 +583,7 @@ async def ldap_post(session: web.Committer, lookup_form: LdapLookupForm) -> str:
         )
         await asyncio.to_thread(ldap.search, ldap_params)
         end = time.perf_counter_ns()
-        log.info("LDAP search took %d ms", (end - start) / 1000000)
+        log.info(f"LDAP search took {(end - start) / 1000000} ms")
 
     rendered_form = form.render(
         model_cls=LdapLookupForm,
@@ -663,7 +663,7 @@ async def performance(session: web.Committer) -> str:
                     }
                 )
             except (ValueError, IndexError):
-                log.error("Error parsing line: %s", line)
+                log.error(f"Error parsing line: {line}")
                 continue
 
     # Calculate summary statistics for each route

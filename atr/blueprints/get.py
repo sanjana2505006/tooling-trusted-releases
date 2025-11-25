@@ -56,14 +56,7 @@ def committer(path: str) -> Callable[[web.CommitterRouteFunction[Any]], web.Rout
 
             # TODO: Make this configurable in config.py
             log.performance(
-                "%s %s %s %s %s %s %s",
-                "GET",
-                path,
-                func.__name__,
-                "=",
-                0,
-                0,
-                total_ms,
+                f"GET {path} {func.__name__} = 0 0 {total_ms}",
             )
 
             return response

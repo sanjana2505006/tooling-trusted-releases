@@ -160,7 +160,7 @@ async def _import_files_core_run_svn_export(svn_command: list[str], temp_export_
             log.warning(f"SVN stderr: {stderr_str}")
 
     except TimeoutError:
-        log.error("SVN export command timed out after %d seconds", timeout_seconds)
+        log.error(f"SVN export command timed out after {timeout_seconds} seconds")
         raise SvnImportError("SVN export command timed out")
     except FileNotFoundError:
         log.error("svn command not found. Is it installed and in PATH?")

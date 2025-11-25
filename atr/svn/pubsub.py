@@ -67,8 +67,7 @@ class SVNListener:
 
         if not self.url.startswith(("http://", "https://")):
             log.error(
-                "Invalid PubSub URL: %r. Expected full URL like 'https://pubsub.apache.org:2069'",
-                self.url,
+                f"Invalid PubSub URL: {self.url!r}. Expected full URL like 'https://pubsub.apache.org:2069'",
             )
             log.warning("SVNListener disabled due to invalid URL")
             return
@@ -89,13 +88,13 @@ class SVNListener:
                 if not pubsub_path.startswith(_WATCHED_PREFIXES):
                     # Ignore commits outside dist/dev or dist/release
                     continue
-                log.debug("PubSub payload: %s", payload)
+                log.debug(f"PubSub payload: {payload}")
                 await self._process_payload(payload)
         except asyncio.CancelledError:
             log.info("SVNListener cancelled, shutting down gracefully")
             raise
         except Exception as exc:
-            log.error("SVNListener error: %s", exc, exc_info=True)
+            log.exception(f"SVNListener error: {exc}")
         finally:
             log.info("SVNListener.start() finished")
 
@@ -119,6 +118,6 @@ class SVNListener:
             local_path = self.working_copy_root / repo_path[len(prefix) :].lstrip("/")
             try:
                 await svn.update(local_path)
-                log.info("svn updated %s", local_path)
+                log.info(f"svn updated {local_path}")
             except Exception as exc:
-                log.warning("failed svn update %s: %s", local_path, exc)
+                log.warning(f"failed svn update {local_path}: {exc}")

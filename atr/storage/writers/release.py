@@ -497,13 +497,13 @@ class CommitteeParticipant(FoundationCommitter):
         # Delete from the filesystem
         try:
             if await aiofiles.os.path.isdir(release_dir):
-                log.info("Deleting filesystem directory: %s", release_dir)
+                log.info(f"Deleting filesystem directory: {release_dir}")
                 await aioshutil.rmtree(release_dir)
-                log.info("Successfully deleted directory: %s", release_dir)
+                log.info(f"Successfully deleted directory: {release_dir}")
             else:
-                log.warning("Filesystem directory not found, skipping deletion: %s", release_dir)
+                log.warning(f"Filesystem directory not found, skipping deletion: {release_dir}")
         except Exception as e:
-            log.exception("Error deleting filesystem directory %s:", release_dir)
+            log.exception(f"Error deleting filesystem directory {release_dir}:")
             return (
                 f"Database records for '{project_name} {version}' deleted,"
                 f" but failed to delete filesystem directory: {e!s}"

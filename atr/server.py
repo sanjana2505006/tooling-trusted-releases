@@ -190,11 +190,12 @@ def app_setup_lifecycle(app: base.QuartApp) -> None:
             log.info("PubSub SVN listener task created")
         else:
             log.info(
-                "PubSub SVN listener not started: pubsub_url=%s pubsub_user=%s pubsub_password=%s",
-                bool(valid_pubsub_url),
-                bool(pubsub_user),
+                "PubSub SVN listener not started: "
+                f"pubsub_url={bool(valid_pubsub_url)} "
+                f"pubsub_user={bool(pubsub_user)} "
                 # Essential to use bool(...) here to avoid logging the password
-                bool(pubsub_password),
+                # TODO: We plan to add secret scanning when we migrate to t-strings
+                f"pubsub_password={bool(pubsub_password)}",
             )
 
         ssh_server = await ssh.server_start()

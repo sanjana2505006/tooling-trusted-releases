@@ -229,7 +229,7 @@ def _archive_extract_safe_process_symlink(member: tarfile.TarInfo, extract_dir: 
             return
         os.symlink(link_target, target_path)
     except (OSError, NotImplementedError) as e:
-        log.warning("Failed to create symlink %s -> %s: %s", target_path, link_target, e)
+        log.warning(f"Failed to create symlink {target_path} -> {link_target}: {e}")
 
 
 def _safe_path(base_dir: str, *paths: str) -> str | None:
@@ -292,7 +292,7 @@ def _zip_archive_extract_member(
     if member.isdir():
         target_path = os.path.join(extract_dir, member.name)
         if not os.path.abspath(target_path).startswith(os.path.abspath(extract_dir)):
-            log.warning("Skipping potentially unsafe path: %s", member.name)
+            log.warning(f"Skipping potentially unsafe path: {member.name}")
             return 0, extracted_paths
         os.makedirs(target_path, exist_ok=True)
         return total_extracted, extracted_paths

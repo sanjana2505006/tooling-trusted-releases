@@ -65,7 +65,7 @@ class WorkerManager:
             return
 
         self.running = True
-        log.info("Starting worker manager in %s", os.getcwd())
+        log.info(f"Starting worker manager in {os.getcwd()}")
 
         # Start initial workers
         for _ in range(self.min_workers):
@@ -189,7 +189,7 @@ class WorkerManager:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                log.error(f"Error in worker monitor: {e}", exc_info=e)
+                log.exception(f"Error in worker monitor: {e}")
                 # TODO: How long should we wait before trying again?
                 await asyncio.sleep(1.0)
 

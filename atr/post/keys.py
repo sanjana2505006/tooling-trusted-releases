@@ -69,7 +69,7 @@ async def add(session: web.Committer, add_openpgp_key_form: shared.keys.AddOpenP
                 await quart.flash(f"OpenPGP key {fingerprint_upper} added successfully.", "success")
 
     except web.FlashError as e:
-        log.warning("FlashError adding OpenPGP key: %s", e)
+        log.warning(f"FlashError adding OpenPGP key: {e}")
         await quart.flash(str(e), "error")
     except Exception as e:
         log.exception("Error adding OpenPGP key:")
