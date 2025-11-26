@@ -49,6 +49,7 @@ Template rendering happens in a thread pool to avoid blocking the async event lo
 HTML forms in ATR are handled by [Pydantic](https://docs.pydantic.dev/latest/) models accessed through our [`form`](/ref/atr/form.py) module. Each form is a class that inherits from [`form.Form`](/ref/atr/form.py:Form), which itself inherits from `pydantic.BaseModel`. Form fields are defined as class attributes using Pydantic type annotations, with the [`form.label`](/ref/atr/form.py:label) function providing field metadata like labels and documentation.
 
 Here is a typical form definition from [`shared/keys.py`](/ref/atr/shared/keys.py):
+
 ```python
 class AddOpenPGPKeyForm(form.Form):
     public_key: str = form.label(
@@ -68,11 +69,12 @@ class AddOpenPGPKeyForm(form.Form):
         return self
 ```
 
-### Field Types and Labels
+### Field types and labels
 
 The [`form.label`](/ref/atr/form.py:label) function is used to add metadata to Pydantic fields. The first argument is the label text, the second (optional) argument is documentation text that appears below the field, and you can pass additional keyword arguments like `widget=form.Widget.TEXTAREA` to specify the HTML widget type.
 
 Fields use Pydantic type annotations to define their data type:
+
 - `str` - text input (default widget: `Widget.TEXT`)
 - `form.Email` - email input with validation
 - `form.URL` - URL input with validation
@@ -94,25 +96,33 @@ The `widget` parameter in [`form.label`](/ref/atr/form.py:label) lets you overri
 * CUSTOM: for fully custom rendering
 
 From [`projects.AddProjectForm`](/ref/atr/shared/projects.py:AddProjectForm):
+
 ```python
 committee_name: str = form.label("Committee name", widget=form.Widget.HIDDEN)
 ```
+
 From [`resolve.SubmitForm`](/ref/atr/shared/resolve.py:SubmitForm):
+
 ```python
 email_body: str = form.label("Email body", widget=form.Widget.TEXTAREA)
 ```
+
 From [`resolve.SubmitForm`](/ref/atr/shared/resolve.py:SubmitForm):
+
 ```python
 vote_result: Literal["Passed", "Failed"] = form.label("Vote result", widget=form.Widget.RADIO)
 ```
+
 From [`vote.CastVoteForm`](/ref/atr/shared/vote.py:CastVoteForm):
+
 ```python
 decision: Literal["+1", "0", "-1"] = form.label("Your vote", widget=form.Widget.CUSTOM)
 ```
 
-### Using Forms in Routes
+### Using forms in routes
 
 To use a form in a route, use the [`@post.committer()`](/ref/atr/blueprints/post.py:committer) decorator to get the session and auth the user, and the [`@post.form()`](/ref/atr/blueprints/post.py:form) decorator to parse and validate input data:
+
 ```python
 @post.committer("/keys/add")
 @post.form(shared.keys.AddOpenPGPKeyForm)
@@ -140,9 +150,10 @@ The [`form.validate`](/ref/atr/form.py:validate) function should only be called 
 
 The error handling uses [`form.flash_error_data`](/ref/atr/form.py:flash_error_data) to prepare error information for display, and [`form.flash_error_summary`](/ref/atr/form.py:flash_error_summary) to create a user-friendly summary of all validation errors.
 
-### Rendering Forms
+### Rendering forms
 
 The `form` module provides the [`form.render`](/ref/atr/form.py:render) function (or [`form.render_block`](/ref/atr/form.py:render_block) for use with [`htm.Block`](/ref/atr/htm.py:Block)) that generates Bootstrap-styled HTML. This function creates a two-column layout with labels on the left and inputs on the right:
+
 ```python
 form.render_block(
     page,
@@ -159,6 +170,7 @@ form.render_block(
 The `defaults` parameter accepts a dictionary to populate initial field values. For checkbox/radio groups and select dropdowns, you can pass a list of `(value, label)` tuples to dynamically provide choices. The `render` function returns htpy elements which you can embed in templates or return directly from route handlers.
 
 Key rendering parameters:
+
 - `action` - form submission URL (defaults to current path)
 - `submit_label` - text for the submit button
 - `cancel_url` - if provided, adds a cancel link next to submit
@@ -254,6 +266,7 @@ The function builds the UI using an [`htm.Block`](/ref/atr/htm.py:Block) object,
 Finally, the route returns the rendered HTML using [`template.blank()`](/ref/atr/template.py:blank), which renders a minimal template with just a title and content area.
 
 Form submission is handled by a separate POST route:
+
 ```python
 @post.committer("/keys/add")
 @post.form(shared.keys.AddOpenPGPKeyForm)

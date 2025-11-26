@@ -49,7 +49,7 @@
             raise ValueError("You must select at least one committee to associate with this key")
         return self
 </code></pre>
-<h3 id="field-types-and-labels">Field Types and Labels</h3>
+<h3 id="field-types-and-labels">Field types and labels</h3>
 <p>The <a href="/ref/atr/form.py:label"><code>form.label</code></a> function is used to add metadata to Pydantic fields. The first argument is the label text, the second (optional) argument is documentation text that appears below the field, and you can pass additional keyword arguments like <code>widget=form.Widget.TEXTAREA</code> to specify the HTML widget type.</p>
 <p>Fields use Pydantic type annotations to define their data type:</p>
 <ul>
@@ -84,7 +84,7 @@
 <p>From <a href="/ref/atr/shared/vote.py:CastVoteForm"><code>vote.CastVoteForm</code></a>:</p>
 <pre><code class="language-python">decision: Literal["+1", "0", "-1"] = form.label("Your vote", widget=form.Widget.CUSTOM)
 </code></pre>
-<h3 id="using-forms-in-routes">Using Forms in Routes</h3>
+<h3 id="using-forms-in-routes">Using forms in routes</h3>
 <p>To use a form in a route, use the <a href="/ref/atr/blueprints/post.py:committer"><code>@post.committer()</code></a> decorator to get the session and auth the user, and the <a href="/ref/atr/blueprints/post.py:form"><code>@post.form()</code></a> decorator to parse and validate input data:</p>
 <pre><code class="language-python">@post.committer("/keys/add")
 @post.form(shared.keys.AddOpenPGPKeyForm)
@@ -109,7 +109,7 @@ async def add(session: web.Committer, add_openpgp_key_form: shared.keys.AddOpenP
 </code></pre>
 <p>The <a href="/ref/atr/form.py:validate"><code>form.validate</code></a> function should only be called manually when the request comes from JavaScript, as in <a href="/ref/atr/post/preview.py:announce_preview"><code>announce_preview</code></a>. It takes the form class, the form data dictionary, and an optional context dictionary. If validation succeeds, it returns an instance of your form class with validated data. If validation fails, it raises a <code>pydantic.ValidationError</code>.</p>
 <p>The error handling uses <a href="/ref/atr/form.py:flash_error_data"><code>form.flash_error_data</code></a> to prepare error information for display, and <a href="/ref/atr/form.py:flash_error_summary"><code>form.flash_error_summary</code></a> to create a user-friendly summary of all validation errors.</p>
-<h3 id="rendering-forms">Rendering Forms</h3>
+<h3 id="rendering-forms">Rendering forms</h3>
 <p>The <code>form</code> module provides the <a href="/ref/atr/form.py:render"><code>form.render</code></a> function (or <a href="/ref/atr/form.py:render_block"><code>form.render_block</code></a> for use with <a href="/ref/atr/htm.py:Block"><code>htm.Block</code></a>) that generates Bootstrap-styled HTML. This function creates a two-column layout with labels on the left and inputs on the right:</p>
 <pre><code class="language-python">form.render_block(
     page,
