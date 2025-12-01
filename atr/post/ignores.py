@@ -44,7 +44,7 @@ async def _add_ignore(
     session: web.Committer, add_form: shared.ignores.AddIgnoreForm, committee_name: str
 ) -> web.WerkzeugResponse:
     """Add a new ignore."""
-    status = shared.ignores.ignore_status_to_sql(add_form.status)  # type: ignore[arg-type]
+    status = shared.ignores.ignore_status_to_sql(add_form.status)  # pyright: ignore[reportArgumentType]
 
     async with storage.write() as write:
         wacm = write.as_committee_member(committee_name)
@@ -84,7 +84,7 @@ async def _update_ignore(
     session: web.Committer, update_form: shared.ignores.UpdateIgnoreForm, committee_name: str
 ) -> web.WerkzeugResponse:
     """Update an ignore."""
-    status = shared.ignores.ignore_status_to_sql(update_form.status)  # type: ignore[arg-type]
+    status = shared.ignores.ignore_status_to_sql(update_form.status)  # pyright: ignore[reportArgumentType]
 
     async with storage.write() as write:
         wacm = write.as_committee_member(committee_name)

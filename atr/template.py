@@ -50,14 +50,14 @@ async def _render_in_thread(template: jinja2.Template, context: dict, app: app.Q
         raise RuntimeError("Template environment is not async")
     await signals.before_render_template.send_async(
         app,
-        _sync_wrapper=app.ensure_async,  # type: ignore[arg-type]
+        _sync_wrapper=app.ensure_async,  # pyright: ignore[reportArgumentType]
         template=template,
         context=context,
     )
     rendered_template = await asyncio.to_thread(template.render, context)
     await signals.template_rendered.send_async(
         app,
-        _sync_wrapper=app.ensure_async,  # type: ignore[arg-type]
+        _sync_wrapper=app.ensure_async,  # pyright: ignore[reportArgumentType]
         template=template,
         context=context,
     )

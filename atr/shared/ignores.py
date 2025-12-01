@@ -80,7 +80,7 @@ class AddIgnoreForm(form.Form):
 
     @pydantic.model_validator(mode="after")
     def validate_at_least_one_field(self) -> "AddIgnoreForm":
-        has_status = self.status != IgnoreStatus.NO_STATUS  # type: ignore[comparison-overlap]
+        has_status = self.status != IgnoreStatus.NO_STATUS  # pyright: ignore[reportUnnecessaryComparison]
         if not any(
             [
                 self.release_glob,
@@ -117,7 +117,7 @@ class UpdateIgnoreForm(form.Form):
 
     @pydantic.model_validator(mode="after")
     def validate_at_least_one_field(self) -> "UpdateIgnoreForm":
-        has_status = self.status != IgnoreStatus.NO_STATUS  # type: ignore[comparison-overlap]
+        has_status = self.status != IgnoreStatus.NO_STATUS  # pyright: ignore[reportUnnecessaryComparison]
         if not any(
             [
                 self.release_glob,
