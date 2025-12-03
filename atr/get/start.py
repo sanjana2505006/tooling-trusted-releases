@@ -77,17 +77,16 @@ async def _render_page(project: sql.Project, releases: list[sql.Release]) -> htm
         "Your version number should look like ",
         htpy.code["1.2"],
         " or ",
-        htpy.code["1.2.3"],
-        """ etc. and should not include a release candidate, alpha, beta, or
-        milestone portion. Whenever you modify your release files before
-        starting a vote, ATR creates a new revision serial number like """,
+        htpy.code["1.2.3-M1"],
+        """ etc. and should not include a release candidate portion, but
+        may include an alpha, beta, or milestone portion. Whenever you modify
+        your release files before starting a vote, ATR creates a new revision
+        serial number like """,
         htpy.code["00002"],
         """ which you can then refer to in the vote announcement email. You
         can also tag revisions, and either the revision serial number or the
         tag can be used in the vote announcement email. The tag can e.g. be
         set to """,
-        htpy.code["M1"],
-        " or ",
         htpy.code["rc1"],
         ".",
     ]
