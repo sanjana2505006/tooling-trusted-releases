@@ -27,22 +27,23 @@ import atr.db.interaction as interaction
 import atr.models.sql as sql
 import atr.util as util
 
-type Context = Literal["vote", "announce"]
+type Context = Literal["announce", "checklist", "vote"]
 
 TEMPLATE_VARIABLES: list[tuple[str, str, set[Context]]] = [
-    ("COMMITTEE", "Committee display name", {"vote", "announce"}),
+    ("CHECKLIST_URL", "URL to the release checklist", {"vote"}),
+    ("COMMITTEE", "Committee display name", {"announce", "checklist", "vote"}),
     ("DOWNLOAD_URL", "URL to download the release", {"announce"}),
     ("DURATION", "Vote duration in hours", {"vote"}),
     ("KEYS_FILE", "URL to the KEYS file", {"vote"}),
-    ("PROJECT", "Project display name", {"vote", "announce"}),
+    ("PROJECT", "Project display name", {"announce", "checklist", "vote"}),
     ("RELEASE_CHECKLIST", "Release checklist content", {"vote"}),
-    ("REVIEW_URL", "URL to review the release", {"vote"}),
-    ("REVISION", "Revision number", {"vote", "announce"}),
-    ("TAG", "Revision tag, if set", {"vote", "announce"}),
-    ("VERSION", "Version name", {"vote", "announce"}),
+    ("REVIEW_URL", "URL to review the release", {"checklist", "vote"}),
+    ("REVISION", "Revision number", {"announce", "checklist", "vote"}),
+    ("TAG", "Revision tag, if set", {"announce", "checklist", "vote"}),
+    ("VERSION", "Version name", {"announce", "checklist", "vote"}),
     ("VOTE_ENDS_UTC", "Vote end date and time in UTC", {"vote"}),
-    ("YOUR_ASF_ID", "Your Apache UID", {"vote", "announce"}),
-    ("YOUR_FULL_NAME", "Your full name", {"vote", "announce"}),
+    ("YOUR_ASF_ID", "Your Apache UID", {"announce", "vote"}),
+    ("YOUR_FULL_NAME", "Your full name", {"announce", "vote"}),
 ]
 
 
@@ -123,7 +124,42 @@ def announce_template_variables() -> list[tuple[str, str]]:
     return [(name, desc) for (name, desc, contexts) in TEMPLATE_VARIABLES if "announce" in contexts]
 
 
+def checklist_body(
+    markdown: str,
+    project: sql.Project,
+    version_name: str,
+    committee: sql.Committee,
+    revision: sql.Revision | None,
+) -> str:
+    import atr.get.vote as vote
+
+    try:
+        host = quart.request.host
+    except RuntimeError:
+        host = config.get().APP_HOST
+
+    revision_number = revision.number if revision else ""
+    revision_tag = revision.tag if (revision and revision.tag) else ""
+    review_path = util.as_url(vote.selected, project_name=project.name, version_name=version_name)
+    review_url = f"https://{host}{review_path}"
+
+    markdown = markdown.replace("[COMMITTEE]", committee.display_name)
+    markdown = markdown.replace("[PROJECT]", project.short_display_name)
+    markdown = markdown.replace("[REVIEW_URL]", review_url)
+    markdown = markdown.replace("[REVISION]", revision_number)
+    markdown = markdown.replace("[TAG]", revision_tag)
+    markdown = markdown.replace("[VERSION]", version_name)
+    return markdown
+
+
+def checklist_template_variables() -> list[tuple[str, str]]:
+    return [(name, desc) for (name, desc, contexts) in TEMPLATE_VARIABLES if "checklist" in contexts]
+
+
 async def start_vote_body(body: str, options: StartVoteOptions) -> str:
+    import atr.get.checklist as checklist
+    import atr.get.vote as vote
+
     async with db.session() as data:
         # Do not limit by phase, as it may be at RELEASE_CANDIDATE here if called by the task
         release = await data.release(
@@ -145,9 +181,16 @@ async def start_vote_body(body: str, options: StartVoteOptions) -> str:
     except RuntimeError:
         host = config.get().APP_HOST
 
-    review_url = f"https://{host}/vote/{options.project_name}/{options.version_name}"
+    checklist_path = util.as_url(
+        checklist.selected, project_name=options.project_name, version_name=options.version_name
+    )
+    checklist_url = f"https://{host}{checklist_path}"
+    review_path = util.as_url(vote.selected, project_name=options.project_name, version_name=options.version_name)
+    review_url = f"https://{host}{review_path}"
     project_short_display_name = release.project.short_display_name if release.project else options.project_name
 
+    # NOTE: The /downloads/ directory is served by the proxy front end, not by ATR
+    # Therefore there is no route handler, so we have to construct the URL manually
     keys_file = None
     if committee.is_podling:
         keys_file_path = util.get_downloads_dir() / "incubator" / committee.name / "KEYS"
@@ -166,6 +209,7 @@ async def start_vote_body(body: str, options: StartVoteOptions) -> str:
 
     # Perform substitutions in the body
     # TODO: Handle the DURATION == 0 case
+    body = body.replace("[CHECKLIST_URL]", checklist_url)
     body = body.replace("[COMMITTEE]", committee.display_name)
     body = body.replace("[DURATION]", str(options.vote_duration))
     body = body.replace("[KEYS_FILE]", keys_file or "[Sorry, the KEYS file is missing!]")

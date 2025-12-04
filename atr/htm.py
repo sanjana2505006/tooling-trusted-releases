@@ -21,6 +21,7 @@ import contextlib
 from typing import TYPE_CHECKING, Any
 
 import htpy
+import markupsafe
 
 from . import log
 
@@ -154,17 +155,13 @@ class Block:
                 return div(self.classes, data_src=src)[*elements]
             return div(data_src=src)[*elements]
 
-        new_element = self.element.__class__(
-            self.element._name,
-            self.element._attrs,
-            self.element._children,
-        )
+        escaped_src = markupsafe.escape(src)
         if self.classes is not None:
-            new_element = new_element(self.classes, data_src=src)
+            extra_attrs = self.element(self.classes, data_src=src)._attrs
         else:
-            new_element = new_element(data_src=src)
-        # if self.element._name == "html":
-        #     return "<!doctype html>" + new_element[*elements]
+            extra_attrs = f' data-src="{escaped_src}"'
+        new_attrs = self.element._attrs + extra_attrs
+        new_element = self.element.__class__(self.element._name, new_attrs, self.element._children)
         return new_element[*elements]
 
     @property

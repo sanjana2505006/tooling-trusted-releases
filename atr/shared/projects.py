@@ -178,8 +178,7 @@ class VotePolicyForm(form.Form):
     )
     release_checklist: str = form.label(
         "Release checklist",
-        "Markdown text describing how to test release candidates.",
-        widget=form.Widget.TEXTAREA,
+        widget=form.Widget.CUSTOM,
     )
     start_vote_template: str = form.label(
         "Start vote template",

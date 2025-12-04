@@ -29,6 +29,7 @@ import atr.config as config
 import atr.db as db
 import atr.db.interaction as interaction
 import atr.form as form
+import atr.get.checklist as checklist
 import atr.get.download as download
 import atr.get.keys as keys
 import atr.get.root as root
@@ -63,6 +64,7 @@ async def category_and_release(
             project_name=project_name,
             version=version_name,
             _committee=True,
+            _project_release_policy=True,
         ).demand(base.ASFQuartException("Release does not exist", errorcode=404))
 
         if release.committee is None:
@@ -235,6 +237,27 @@ async def _get_archive_url(
         return await wagp.cache.get_message_archive_url(task_mid, task_recipient)
 
 
+def _render_checklist_card(page: htm.Block, release: sql.Release) -> None:
+    card = htm.Block(htm.div, classes=".card.mb-4")
+    card.div(".card-header.bg-light")["Release checklist"]
+
+    body = htm.Block(htm.div, classes=".card-body")
+    body.p(".mb-3")["The release manager has provided a checklist of steps to verify this release candidate."]
+    checklist_url = util.as_url(checklist.selected, project_name=release.project.name, version_name=release.version)
+    body.div[
+        htpy.a(
+            ".btn.btn-outline-primary",
+            href=checklist_url,
+        )[
+            htpy.i(".bi.bi-list-check.me-2"),
+            "→ View release checklist",
+        ],
+    ]
+
+    card.append(body.collect())
+    page.append(card.collect())
+
+
 def _render_header(page: htm.Block, release: sql.Release, show_resolve_section: bool) -> None:
     shared.distribution.html_nav(
         page,
@@ -327,6 +350,9 @@ def _render_section_checks(page: htm.Block, release: sql.Release, file_totals: c
 
     summary.append(body.collect())
     page.append(summary.collect())
+
+    if release.project.policy_release_checklist:
+        _render_checklist_card(page, release)
 
 
 def _render_section_download(

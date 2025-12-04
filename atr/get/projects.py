@@ -23,6 +23,7 @@ import markupsafe
 
 import atr.blueprints.get as get
 import atr.config as config
+import atr.construct as construct
 import atr.db as db
 import atr.db.interaction as interaction
 import atr.form as form
@@ -34,6 +35,7 @@ import atr.htm as htm
 import atr.models.sql as sql
 import atr.post as post
 import atr.registry as registry
+import atr.render as render
 import atr.shared as shared
 import atr.template as template
 import atr.user as user
@@ -530,6 +532,14 @@ def _render_vote_form(project: sql.Project) -> htm.Element:
 
     skip_fields = ["manual_vote"] if (project.committee and project.committee.is_podling) else []
 
+    release_checklist_widget = _textarea_with_variables(
+        field_name="release_checklist",
+        default_value=project.policy_release_checklist or "",
+        template_variables=construct.checklist_template_variables(),
+        rows=10,
+        documentation="Markdown text describing how to test release candidates.",
+    )
+
     with card.block(htm.div, classes=".card-body") as card_body:
         form.render_block(
             card_body,
@@ -542,5 +552,60 @@ def _render_vote_form(project: sql.Project) -> htm.Element:
             # wider_widgets=True,
             textarea_rows=10,
             skip=skip_fields,
+            custom={"release_checklist": release_checklist_widget},
         )
+        card_body.append(htm.script[render.copy_javascript()])
     return card.collect()
+
+
+def _textarea_with_variables(
+    field_name: str,
+    default_value: str,
+    template_variables: list[tuple[str, str]],
+    rows: int = 10,
+    documentation: str | None = None,
+) -> htm.Element:
+    textarea = htpy.textarea(
+        f"#{field_name}.form-control.font-monospace",
+        name=field_name,
+        rows=str(rows),
+    )[default_value]
+
+    variable_rows = []
+    for name, description in template_variables:
+        variable_rows.append(
+            htm.tr[
+                htm.td(".font-monospace.text-nowrap.py-1")[f"[{name}]"],
+                htm.td(".py-1")[description],
+                htm.td(".text-end.py-1")[
+                    htpy.button(
+                        ".btn.btn-sm.btn-outline-secondary.copy-var-btn",
+                        type="button",
+                        data_variable=f"[{name}]",
+                    )["Copy"]
+                ],
+            ]
+        )
+
+    variables_table = htm.table(".table.table-sm.mb-0")[
+        htm.thead[
+            htm.tr[
+                htm.th(".py-1")["Variable"],
+                htm.th(".py-1")["Description"],
+                htm.th(".py-1")[""],
+            ]
+        ],
+        htm.tbody[*variable_rows],
+    ]
+
+    details = htm.details(".mt-2")[
+        htm.summary(".text-muted")["Available template variables"],
+        htm.div(".mt-2")[variables_table],
+    ]
+
+    elements: list[htm.Element | htm.VoidElement] = [textarea]
+    if documentation:
+        elements.append(htm.div(".text-muted.mt-1.form-text")[documentation])
+    elements.append(details)
+
+    return htm.div[elements]

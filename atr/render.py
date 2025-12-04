@@ -48,7 +48,7 @@ def body_tabs(
             aria_selected="false",
         )["Text preview"]
     ]
-    tabs.append(variables_tab_button(tab_id_prefix))
+    tabs.append(_variables_tab_button(tab_id_prefix))
 
     edit_pane = htm.div(f"#edit-{tab_id_prefix}-pane.tab-pane.fade.show.active", role="tabpanel")[
         htpy.textarea(
@@ -64,7 +64,7 @@ def body_tabs(
         ]
     ]
 
-    variables_pane = variables_tab(tab_id_prefix, template_variables)
+    variables_pane = _variables_tab(tab_id_prefix, template_variables)
 
     tab_content = htm.div(f"#{tab_id_prefix}-tab-content.tab-content")[edit_pane, preview_pane, variables_pane]
 
@@ -94,7 +94,7 @@ def copy_javascript() -> str:
     """
 
 
-def variables_tab(
+def _variables_tab(
     tab_id_prefix: str,
     template_variables: list[tuple[str, str]],
 ) -> htm.Element:
@@ -128,7 +128,7 @@ def variables_tab(
     return htm.div(f"#{tab_id_prefix}-variables-pane.tab-pane.fade", role="tabpanel")[variables_table]
 
 
-def variables_tab_button(tab_id_prefix: str) -> htm.Element:
+def _variables_tab_button(tab_id_prefix: str) -> htm.Element:
     return htm.li(".nav-item", role="presentation")[
         htpy.button(
             f"#{tab_id_prefix}-variables-tab.nav-link",
