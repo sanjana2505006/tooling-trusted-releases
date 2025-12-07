@@ -20,7 +20,7 @@ from typing import Final
 
 from playwright.sync_api import Page
 
-_ATR_BASE_URL: Final[str] = os.environ.get("ATR_BASE_URL", "https://localhost:8080")
+_ATR_BASE_URL: Final[str] = os.environ.get("ATR_BASE_URL", "https://localhost.apache.org:8080")
 
 
 def visit(page: Page, path: str) -> None:

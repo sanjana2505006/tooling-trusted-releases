@@ -25,3 +25,12 @@ def test_index_has_login_link(page_index: Page) -> None:
 
 def test_index_loads(page_index: Page) -> None:
     expect(page_index).to_have_title("Apache Trusted Releases")
+
+
+def test_policies_has_heading(page_policies: Page) -> None:
+    heading = page_policies.get_by_role("heading", name="Release policy", level=1)
+    expect(heading).to_be_visible()
+
+
+def test_policies_loads(page_policies: Page) -> None:
+    expect(page_policies).to_have_title("Policies ~ ATR")

@@ -32,3 +32,9 @@ if TYPE_CHECKING:
 def page_index(page: Page) -> Generator[Page]:
     helpers.visit(page, "/")
     yield page
+
+
+@pytest.fixture
+def page_policies(page: Page) -> Generator[Page]:
+    helpers.visit(page, "/policies")
+    yield page
