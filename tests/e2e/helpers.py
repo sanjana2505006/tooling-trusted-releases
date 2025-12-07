@@ -23,6 +23,11 @@ from playwright.sync_api import Page
 _ATR_BASE_URL: Final[str] = os.environ.get("ATR_BASE_URL", "https://localhost.apache.org:8080")
 
 
+def log_in(page: Page) -> None:
+    page.goto(f"{_ATR_BASE_URL}/test/login")
+    page.wait_for_load_state()
+
+
 def visit(page: Page, path: str) -> None:
     page.goto(f"{_ATR_BASE_URL}{path}")
     page.wait_for_load_state()

@@ -34,3 +34,7 @@ def test_policies_has_heading(page_policies: Page) -> None:
 
 def test_policies_loads(page_policies: Page) -> None:
     expect(page_policies).to_have_title("Policies ~ ATR")
+
+
+def test_about_loads(page_about: Page) -> None:
+    expect(page_about).to_have_title("About ATR ~ ATR")
