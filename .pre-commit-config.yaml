@@ -79,6 +79,10 @@ repos:
   hooks:
     - id: zizmor
       args: [--min-severity, low]
+- repo: https://github.com/pypa/pip-audit
+  rev: v2.10.0
+  hooks:
+    - id: pip-audit
 # - repo: https://github.com/PyCQA/flake8
 #   rev: 7.3.0
 #   hooks:
