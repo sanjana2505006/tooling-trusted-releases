@@ -60,8 +60,6 @@
           <span class="hamburger-line"></span>
         </label>
 
-        {% include "includes/sidebar.html" %}
-
         <div class="main-container {% block main_class %}{% endblock main_class %}">
           <main class="main-content">
             {% if (not current_user) or (current_user.uid != "sbp") %}

@@ -989,12 +989,8 @@ def test_projects_03_add_project(page: Page, credentials: Credentials) -> None:
 
 def test_ssh_01_add_key(page: Page, credentials: Credentials) -> None:
     logging.info("Starting SSH key addition test")
-    go_to_path(page, "/committees")
-
-    logging.info("Navigating to Your Public Keys page")
-    page.locator('a[href="/keys"]:has-text("Public keys")').click()
-    wait_for_path(page, "/keys")
-    logging.info("Navigated to Your Public Keys page")
+    go_to_path(page, "/keys")
+    logging.info("Public Keys page loaded")
 
     logging.info("Clicking Add your SSH key button")
     # There can be two buttons with the same text if the user did not upload an SSH key yet
