@@ -26,7 +26,6 @@ import asyncio
 import datetime
 import inspect
 import os
-import resource
 import signal
 import traceback
 from typing import Any, Final
@@ -267,6 +266,7 @@ async def _worker_loop_run() -> None:
 
 def _worker_resources_limit_set() -> None:
     """Set CPU and memory limits for this process."""
+    # TODO: https://github.com/apache/tooling-trusted-releases/issues/411
     # # Set CPU time limit
     # try:
     #     resource.setrlimit(resource.RLIMIT_CPU, (CPU_LIMIT_SECONDS, CPU_LIMIT_SECONDS))
@@ -275,11 +275,12 @@ def _worker_resources_limit_set() -> None:
     #     log.warning(f"Could not set CPU time limit: {e}")
 
     # Set memory limit
-    try:
-        resource.setrlimit(resource.RLIMIT_AS, (_MEMORY_LIMIT_BYTES, _MEMORY_LIMIT_BYTES))
-        log.info(f"Set memory limit to {_MEMORY_LIMIT_BYTES} bytes")
-    except ValueError as e:
-        log.warning(f"Could not set memory limit: {e}")
+    # try:
+    #     resource.setrlimit(resource.RLIMIT_AS, (_MEMORY_LIMIT_BYTES, _MEMORY_LIMIT_BYTES))
+    #     log.info(f"Set memory limit to {_MEMORY_LIMIT_BYTES} bytes")
+    # except ValueError as e:
+    #     log.warning(f"Could not set memory limit: {e}")
+    return
 
 
 if __name__ == "__main__":
