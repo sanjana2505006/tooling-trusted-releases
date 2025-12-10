@@ -71,29 +71,6 @@ def body_tabs(
     return htm.div[tabs.collect(), tab_content]
 
 
-def copy_javascript() -> str:
-    # TODO: We need to ensure that all JS files are standalone
-    # We have far too many embedded snippets
-    return """
-        document.querySelectorAll(".copy-var-btn").forEach(btn => {
-            btn.addEventListener("click", () => {
-                const variable = btn.dataset.variable;
-                navigator.clipboard.writeText(variable).then(() => {
-                    const originalText = btn.textContent;
-                    btn.textContent = "Copied!";
-                    btn.classList.remove("btn-outline-secondary");
-                    btn.classList.add("btn-success");
-                    setTimeout(() => {
-                        btn.textContent = originalText;
-                        btn.classList.remove("btn-success");
-                        btn.classList.add("btn-outline-secondary");
-                    }, 1500);
-                });
-            });
-        });
-    """
-
-
 def _variables_tab(
     tab_id_prefix: str,
     template_variables: list[tuple[str, str]],
