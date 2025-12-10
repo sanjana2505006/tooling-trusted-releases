@@ -122,7 +122,7 @@ async def render_options_page(
     return await template.blank(
         f"Vote on {release.project.short_display_name} {release.version}",
         content=page.collect(),
-        init_js=True,
+        javascripts=["clipboard-copy"],
     )
 
 

@@ -24,13 +24,24 @@ import quart.app as app
 import quart.signals as signals
 
 import atr.htm as htm
+import atr.util as util
 
 render_async = quart.render_template
 
 
-async def blank(title: str, content: str | htm.Element, description: str | None = None, init_js: bool = False) -> str:
+async def blank(
+    title: str,
+    content: str | htm.Element,
+    description: str | None = None,
+    javascripts: list[str] | None = None,
+) -> str:
+    js_urls = [util.static_url(f"js/{name}.js") for name in javascripts or []]
     return await render_sync(
-        "blank.html", title=title, description=description or title, content=content, init_js=init_js
+        "blank.html",
+        title=title,
+        description=description or title,
+        content=content,
+        javascripts=js_urls,
     )
 
 
