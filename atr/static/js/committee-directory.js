@@ -75,6 +75,13 @@ if (participantButton) {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+    // Hide images that fail to load
+    document.querySelectorAll(".page-logo").forEach(function(img) {
+        img.addEventListener("error", function() {
+            this.style.display = "none";
+        });
+    });
+
     allCommitteeCards = Array.from(document.querySelectorAll(".page-project-card"));
     const cards = allCommitteeCards;
     const committeeCountSpan = document.getElementById("committee-count");

@@ -77,8 +77,9 @@
           {% set bs_status = 'danger' if status == 'exception' or status == 'failure' else status %}
           <button id="btn-toggle-primary-{{ status }}"
                   type="button"
-                  class="btn {% if status == 'success' and not all_primary_are_success %}btn-outline-success{% elif status == 'success' and all_primary_are_success %}btn-success{% else %}btn-{{ bs_status }}{% endif %}"
-                  onclick="toggleStatusVisibility('primary', '{{ status }}')">
+                  class="btn page-toggle-status {% if status == 'success' and not all_primary_are_success %}btn-outline-success{% elif status == 'success' and all_primary_are_success %}btn-success{% else %}btn-{{ bs_status }}{% endif %}"
+                  data-type="primary"
+                  data-status="{{ status }}">
             <span>
               {% if status == 'success' and not all_primary_are_success %}
                 Show
@@ -91,7 +92,7 @@
         {% endif %}
       {% endfor %}
     {% endif %}
-    <button type="button" onclick="toggleAllDetails()" class="btn btn-secondary">Toggle all details</button>
+    <button type="button" id="btn-toggle-all-details" class="btn btn-secondary">Toggle all details</button>
   </div>
 
   <div class="mb-3">
@@ -242,8 +243,9 @@
               {% set bs_status = 'danger' if status == 'exception' or status == 'failure' else status %}
               <button id="btn-toggle-member-{{ status }}"
                       type="button"
-                      class="btn {% if status == 'success' and not all_member_are_success %}btn-outline-success{% elif status == 'success' and all_member_are_success %}btn-success{% else %}btn-{{ bs_status }}{% endif %}"
-                      onclick="toggleStatusVisibility('member', '{{ status }}')">
+                      class="btn page-toggle-status {% if status == 'success' and not all_member_are_success %}btn-outline-success{% elif status == 'success' and all_member_are_success %}btn-success{% else %}btn-{{ bs_status }}{% endif %}"
+                      data-type="member"
+                      data-status="{{ status }}">
                 <span>
                   {% if status == 'success' and not all_member_are_success %}
                     Show

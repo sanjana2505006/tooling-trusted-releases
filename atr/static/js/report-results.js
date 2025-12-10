@@ -62,6 +62,22 @@ function updateMemberStriping() {
     restripeVisibleRows(".atr-result-member", "page-member-visible-odd");
 }
 
+// Toggle status visibility buttons
+document.querySelectorAll(".page-toggle-status").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+        const type = this.dataset.type;
+        const status = this.dataset.status;
+        toggleStatusVisibility(type, status);
+    });
+});
+
+// Toggle all details button
+const toggleAllBtn = document.getElementById("btn-toggle-all-details");
+if (toggleAllBtn) {
+    toggleAllBtn.addEventListener("click", toggleAllDetails);
+}
+
+// Member path filter
 const mpfInput = document.getElementById("member-path-filter");
 if (mpfInput) {
     mpfInput.addEventListener("input", function() {
@@ -79,5 +95,6 @@ if (mpfInput) {
         updateMemberStriping();
     });
 }
+
 updatePrimaryStriping();
 updateMemberStriping();

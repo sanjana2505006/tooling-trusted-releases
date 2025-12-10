@@ -1,4 +1,11 @@
 (function() {
+    // Handle More and Less toggle buttons for collapse sections
+    document.querySelectorAll(".page-collapse-toggle").forEach(function(button) {
+        button.addEventListener("click", function() {
+            this.textContent = this.textContent.trim() === "More" ? "Less" : "More";
+        });
+    });
+
     const banner = document.getElementById("ongoing-tasks-banner");
     if (!banner) return;
 

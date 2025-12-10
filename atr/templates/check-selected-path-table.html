@@ -84,14 +84,13 @@
               {% endif %}
 
               {% if phase == "release_candidate_draft" %}
-                <button class="btn btn-sm btn-outline-secondary"
+                <button class="btn btn-sm btn-outline-secondary page-collapse-toggle"
                         type="button"
                         data-bs-toggle="collapse"
                         data-bs-target="#actions-{{ row_id }}"
                         aria-expanded="false"
                         aria-controls="actions-{{ row_id }}"
-                        title="Show more actions for {{ path }}"
-                        onclick="this.innerHTML = (this.innerHTML.trim() === 'More') ? 'Less' : 'More';">More</button>
+                        title="Show more actions for {{ path }}">More</button>
               {% elif phase == "release_candidate" %}
                 <a href="{{ as_url(get.download.path, project_name=release.project.name, version_name=release.version, file_path=path) }}"
                    title="Download file {{ path }}"

@@ -303,12 +303,10 @@
                 <span>{{ current_user.fullname }}</span>
                 (<code>{{ current_user.uid }}</code>)
                 <br />
-                <a href="#"
-                   onclick="location.href='/auth?logout=/';"
+                <a href="/auth?logout=/"
                    class="logout-link btn btn-sm btn-outline-secondary mt-2">Log out</a>
               {% else %}
-                <a href="#"
-                   onclick="location.href='/auth?login=' + window.location.pathname;"
+                <a href="/auth?login={{ request.path }}"
                    class="login-link btn btn-sm btn-secondary">Log in</a>
               {% endif %}
             </div>
