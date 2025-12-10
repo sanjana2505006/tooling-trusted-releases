@@ -18,9 +18,9 @@
 from playwright.sync_api import Page, expect
 
 
-def test_index_has_login_link(page_index: Page) -> None:
-    login_link = page_index.get_by_role("link", name="Log in")
-    expect(login_link).to_be_visible()
+def test_index_has_login_button(page_index: Page) -> None:
+    login_button = page_index.get_by_role("button", name="Log in")
+    expect(login_button).to_be_visible()
 
 
 def test_index_loads(page_index: Page) -> None:
