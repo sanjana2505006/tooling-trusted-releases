@@ -14,10 +14,9 @@ services:
     volumes:
       - ./state:/opt/atr/state
       - ./atr:/opt/atr/atr
+      - ./start-dev.sh:/opt/atr/start-atr.sh
     ports:
       - 8080:8080
-    command:
-      - ./start-dev.sh
     healthcheck:
       test: ["CMD", "curl", "-k", "-f", "https://localhost:8080/"]
       interval: 2s

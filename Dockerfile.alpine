@@ -70,9 +70,8 @@ COPY --from=builder /opt/atr/scripts ./scripts
 COPY --from=builder /opt/atr/Makefile .
 COPY --from=builder /opt/atr/alembic.ini .
 COPY --from=builder /opt/atr/start-atr.sh .
-COPY --from=builder /opt/atr/start-dev.sh .
 
-RUN chmod +x ./start-atr.sh && chmod +x ./start-dev.sh
+RUN chmod +x ./start-atr.sh
 
 # install additional tools
 ENV RAT_VERSION=0.17
