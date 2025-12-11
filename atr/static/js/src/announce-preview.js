@@ -1,4 +1,40 @@
-document.addEventListener("DOMContentLoaded", () => {
+function fetchAnnouncePreview(
+	previewUrl,
+	csrfToken,
+	bodyTextarea,
+	textPreviewContent,
+) {
+	const bodyContent = bodyTextarea.value;
+
+	fetch(previewUrl, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded",
+			"X-CSRFToken": csrfToken,
+		},
+		body: new URLSearchParams({
+			body: bodyContent,
+			csrf_token: csrfToken,
+		}),
+	})
+		.then((response) => {
+			if (!response.ok) {
+				return response.text().then((text) => {
+					throw new Error(`HTTP error ${response.status}: ${text}`);
+				});
+			}
+			return response.text();
+		})
+		.then((previewText) => {
+			textPreviewContent.textContent = previewText;
+		})
+		.catch((error) => {
+			console.error("Error fetching email preview:", error);
+			textPreviewContent.textContent = `Error loading preview:\n${error.message}`;
+		});
+}
+
+function initAnnouncePreview() {
 	let debounceTimeout;
 	const debounceDelay = 500;
 
@@ -25,83 +61,68 @@ document.addEventListener("DOMContentLoaded", () => {
 	}
 	const csrfToken = csrfTokenInput.value;
 
-	function fetchAndUpdateAnnouncePreview() {
-		const bodyContent = bodyTextarea.value;
-
-		fetch(previewUrl, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/x-www-form-urlencoded",
-				"X-CSRFToken": csrfToken,
-			},
-			body: new URLSearchParams({
-				body: bodyContent,
-				csrf_token: csrfToken,
-			}),
-		})
-			.then((response) => {
-				if (!response.ok) {
-					return response.text().then((text) => {
-						throw new Error(`HTTP error ${response.status}: ${text}`);
-					});
-				}
-				return response.text();
-			})
-			.then((previewText) => {
-				textPreviewContent.textContent = previewText;
-			})
-			.catch((error) => {
-				console.error("Error fetching email preview:", error);
-				textPreviewContent.textContent = `Error loading preview:\n${error.message}`;
-			});
-	}
+	const doFetch = () =>
+		fetchAnnouncePreview(
+			previewUrl,
+			csrfToken,
+			bodyTextarea,
+			textPreviewContent,
+		);
 
 	bodyTextarea.addEventListener("input", () => {
 		clearTimeout(debounceTimeout);
-		debounceTimeout = setTimeout(fetchAndUpdateAnnouncePreview, debounceDelay);
+		debounceTimeout = setTimeout(doFetch, debounceDelay);
 	});
 
-	fetchAndUpdateAnnouncePreview();
+	doFetch();
+}
 
-	// Download path suffix validation
+function initDownloadPathValidation() {
 	const pathInput = document.getElementById("download_path_suffix");
 	const pathHelpText = pathInput
 		? pathInput.parentElement.querySelector(".form-text")
 		: null;
 
-	if (pathInput && pathHelpText) {
-		const baseText = pathHelpText.dataset.baseText || "";
-		let pathDebounce;
-
-		function updatePathHelpText() {
-			let suffix = pathInput.value;
-			if (suffix.includes("..") || suffix.includes("//")) {
-				pathHelpText.textContent =
-					"Download path suffix must not contain .. or //";
-				return;
-			}
-			if (suffix.startsWith("./")) {
-				suffix = suffix.substring(1);
-			} else if (suffix === ".") {
-				suffix = "/";
-			}
-			if (!suffix.startsWith("/")) {
-				suffix = "/" + suffix;
-			}
-			if (!suffix.endsWith("/")) {
-				suffix = suffix + "/";
-			}
-			if (suffix.includes("/.")) {
-				pathHelpText.textContent = "Download path suffix must not contain /.";
-				return;
-			}
-			pathHelpText.textContent = baseText + suffix;
-		}
-
-		pathInput.addEventListener("input", () => {
-			clearTimeout(pathDebounce);
-			pathDebounce = setTimeout(updatePathHelpText, 10);
-		});
-		updatePathHelpText();
+	if (!pathInput || !pathHelpText) {
+		return;
 	}
+
+	const baseText = pathHelpText.dataset.baseText || "";
+	let pathDebounce;
+
+	const updatePathHelpText = () => {
+		let suffix = pathInput.value;
+		if (suffix.includes("..") || suffix.includes("//")) {
+			pathHelpText.textContent =
+				"Download path suffix must not contain .. or //";
+			return;
+		}
+		if (suffix.startsWith("./")) {
+			suffix = suffix.slice(1);
+		} else if (suffix === ".") {
+			suffix = "/";
+		}
+		if (!suffix.startsWith("/")) {
+			suffix = `/${suffix}`;
+		}
+		if (!suffix.endsWith("/")) {
+			suffix = `${suffix}/`;
+		}
+		if (suffix.includes("/.")) {
+			pathHelpText.textContent = "Download path suffix must not contain /.";
+			return;
+		}
+		pathHelpText.textContent = baseText + suffix;
+	};
+
+	pathInput.addEventListener("input", () => {
+		clearTimeout(pathDebounce);
+		pathDebounce = setTimeout(updatePathHelpText, 10);
+	});
+	updatePathHelpText();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+	initAnnouncePreview();
+	initDownloadPathValidation();
 });
