@@ -122,6 +122,15 @@ repos:
       language: system
       types: [python]
 
+    - id: biome-format
+      # Install biome from https://biomejs.dev/guides/manual-installation/
+      # Avoid using NPM to install it until #359 is resolved
+      name: Biome JS Formatter
+      entry: biome format --write --files-ignore-unknown=true --no-errors-on-unmatched --colors=off
+      language: system
+      types: [javascript]
+      files: ^atr/static/js/src/.*\.js$
+
     - id: pyright
       name: Pyright Type Check
       entry: uv run pyright
