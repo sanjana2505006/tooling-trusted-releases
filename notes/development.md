@@ -5,14 +5,14 @@ You will need to have a working [Python 3.13](https://www.python.org/downloads/r
 Ensure that you have the pre-commit hook installed:
 
 ```shell
-make sync PYTHON="$(which python3)"
-poetry run pre-commit install
+make sync-all
+uv run --frozen pre-commit install
 ```
 
-To run the project, use the following commands, which will add a local CA root to your OS and browser certificate qstore if using Firefox:
+To run the project, use the following commands, which will add a local CA root to your OS and browser certificate store if using Firefox:
 
 ```shell
-uv sync --all-groups
+make sync-all
 make certs-local
 make serve
 ```

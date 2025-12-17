@@ -37,7 +37,7 @@ bump-bootstrap:
 
 certs:
 	if test ! -f state/cert.pem || test ! -f state/key.pem; \
-	then uv run scripts/generate-certificates; \
+	then uv run --frozen scripts/generate-certificates; \
 	fi
 
 certs-local:
@@ -45,7 +45,7 @@ certs-local:
 
 check:
 	git add -A
-	uv run pre-commit run --all-files
+	uv run --frozen pre-commit run --all-files
 
 check-extra:
 	@git add -A
@@ -54,11 +54,11 @@ check-extra:
 
 check-heavy:
 	git add -A
-	uv run pre-commit run --all-files --config .pre-commit-heavy.yaml
+	uv run --frozen pre-commit run --all-files --config .pre-commit-heavy.yaml
 
 check-light:
 	git add -A
-	uv run pre-commit run --all-files --config .pre-commit-light.yaml
+	uv run --frozen pre-commit run --all-files --config .pre-commit-light.yaml
 
 commit:
 	git add -A
@@ -68,16 +68,16 @@ commit:
 
 docs:
 	mkdir -p docs
-	uv run python3 scripts/docs_check.py
+	uv run --frozen python3 scripts/docs_check.py
 	rm -f docs/*.html
-	uv run python3 scripts/docs_build.py
+	uv run --frozen python3 scripts/docs_build.py
 	for fn in atr/docs/*.md; do out=$${fn#atr/}; cmark "$$fn" > "$${out%.md}.html"; done
-	uv run python3 scripts/docs_post_process.py docs/*.html
-	uv run python3 scripts/docs_check.py
+	uv run --frozen python3 scripts/docs_post_process.py docs/*.html
+	uv run --frozen python3 scripts/docs_check.py
 
 generate-version:
 	@rm -f atr/version.py
-	@uv run python3 atr/metadata.py > /tmp/version.py
+	@uv run --frozen python3 atr/metadata.py > /tmp/version.py
 	@mv /tmp/version.py atr/version.py
 	@cat atr/version.py
 
@@ -101,23 +101,23 @@ run-playwright-slow:
 	docker run --net=host -it atr-playwright python3 test.py --tidy
 
 serve:
-	SSH_HOST=127.0.0.1 uv run hypercorn --bind $(BIND) \
+	SSH_HOST=127.0.0.1 uv run --frozen hypercorn --bind $(BIND) \
 	  --keyfile localhost.apache.org+3-key.pem --certfile localhost.apache.org+3.pem \
 	  atr.server:app --debug --reload
 
 serve-local:
 	APP_HOST=localhost.apache.org:8080 SECRET_KEY=insecure-local-key \
-	  ALLOW_TESTS=1 SSH_HOST=127.0.0.1 uv run hypercorn --bind $(BIND) \
+	  ALLOW_TESTS=1 SSH_HOST=127.0.0.1 uv run --frozen hypercorn --bind $(BIND) \
 	  --keyfile localhost.apache.org+3-key.pem --certfile localhost.apache.org+3.pem \
 	  atr.server:app --debug --reload
 
 sync:
-	uv sync --no-dev
+	uv sync --frozen --no-dev
 
 sync-all:
-	uv sync --all-groups
+	uv sync --frozen --all-groups
 
 update-deps:
 	pre-commit autoupdate || :
-	uv lock --upgrade
-	uv sync --all-groups
+	uv lock --upgrade --exclude-newer "$$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+	uv sync --frozen --all-groups

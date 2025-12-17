@@ -3,7 +3,7 @@ repos:
 - repo: meta
   hooks:
     - id: check-hooks-apply
-      name: run check hooks apply
+      name: check that hooks apply
       description: check that all the hooks apply to the repository
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v6.0.0
@@ -30,7 +30,7 @@ repos:
   rev: v1.5.5
   hooks:
     - id: insert-license
-      name: Add license for all Python files
+      name: add a license for all Python files
       files: ^(atr|scripts|tests)/(.*\.py$|.*\.pyi)$
       args:
         - --comment-style
@@ -39,7 +39,7 @@ repos:
         - scripts/ci/LICENSE-template.txt
         - --fuzzy-match-generates-todo
     - id: insert-license
-      name: Add license for JS and TS files
+      name: add a license for JS and TS files
       files: ^atr/static/(js/src/.*\.js|ts/.*\.ts)$
       args:
         - --comment-style
@@ -51,7 +51,7 @@ repos:
   rev: v0.47.0
   hooks:
     - id: markdownlint
-      name: run markdownlint
+      name: run Markdown lints
       description: check Markdown files with markdownlint
       args: [--config=.github/linters/.markdown-lint.yml]
       types: [markdown]
@@ -105,7 +105,7 @@ repos:
   rev: v1.33.0
   hooks:
     - id: oxlint
-      name: Oxlint JS Linter
+      name: lint JS files with Oxlint
       types: [javascript]
       files: ^atr/static/js/src/.*\.js$
       args:
@@ -134,21 +134,21 @@ repos:
 - repo: local
   hooks:
     - id: ruff
-      name: Ruff Linter
-      entry: uv run ruff check --fix
+      name: lint Python files with Ruff
+      entry: uv run --frozen ruff check --fix
       language: system
       types: [python]
 
     - id: ruff-format
-      name: Ruff Formatter
-      entry: uv run ruff format --force-exclude
+      name: format Python files with Ruff
+      entry: uv run --frozen ruff format --force-exclude
       language: system
       types: [python]
 
     - id: biome-format
       # Install biome from https://biomejs.dev/guides/manual-installation/
       # Avoid using NPM to install it until #359 is resolved
-      name: Biome JS Formatter
+      name: format JS files with Biome
       entry: biome format --write --files-ignore-unknown=true --no-errors-on-unmatched --colors=off
       language: system
       types: [javascript]
@@ -157,24 +157,32 @@ repos:
     - id: biome-check
       # Install biome from https://biomejs.dev/guides/manual-installation/
       # Avoid using NPM to install it until #359 is resolved
-      name: Biome JS Linter
+      name: lint JS files with Biome
       entry: biome check --write --error-on-warnings --files-ignore-unknown=true --no-errors-on-unmatched --colors=off
       language: system
       types: [javascript]
       files: ^atr/static/js/src/.*\.js$
 
     - id: pyright
-      name: Pyright Type Check
-      entry: uv run pyright
+      name: type check Python files with Pyright
+      entry: uv run --frozen pyright
       language: system
       require_serial: true
       types: [python]
       exclude: ^tests/
 
     - id: jinja-route-check
-      name: Jinja Route Checker
+      name: check Jinja2 routes
       description: Check whether routes used in Jinja2 templates actually exist
-      entry: uv run python scripts/lint/jinja_route_checker.py
+      entry: uv run --frozen python scripts/lint/jinja_route_checker.py
+      language: system
+      pass_filenames: false
+      always_run: true
+
+    - id: check-when-dependencies-updated
+      name: check when dependencies were updated
+      description: Verify that dependencies were updated within the configured timeframe, for ASVS 15.2.1
+      entry: uv run --frozen python scripts/check_when_dependencies_updated.py
       language: system
       pass_filenames: false
       always_run: true
