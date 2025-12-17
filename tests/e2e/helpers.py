@@ -23,6 +23,18 @@ from playwright.sync_api import Page
 _ATR_BASE_URL: Final[str] = os.environ.get("ATR_BASE_URL", "https://localhost.apache.org:8080")
 
 
+def delete_release_if_exists(page: Page, project_name: str, version_name: str) -> None:
+    release_name = f"{project_name}-{version_name}"
+    visit(page, "/admin/delete-release")
+    checkbox = page.locator(f'input[name="releases_to_delete"][value="{release_name}"]')
+    if checkbox.count() == 0:
+        return
+    checkbox.check()
+    page.locator('input[name="confirm_delete"]').fill("DELETE")
+    page.get_by_role("button", name="Delete selected releases permanently").click()
+    page.wait_for_load_state()
+
+
 def log_in(page: Page) -> None:
     page.goto(f"{_ATR_BASE_URL}/test/login")
     page.wait_for_load_state()

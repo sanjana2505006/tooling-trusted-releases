@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 import pathlib
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import e2e.helpers as helpers
 import pytest
@@ -28,15 +28,18 @@ if TYPE_CHECKING:
 
     from playwright.sync_api import Page
 
-PROJECT_NAME = "test"
-VERSION_NAME = "0.1+e2e-sbom"
-FILE_NAME = "apache-test-0.2.tar.gz"
-CURRENT_DIR = pathlib.Path(__file__).parent.resolve()
+PROJECT_NAME: Final[str] = "test"
+VERSION_NAME: Final[str] = "0.1+e2e-sbom"
+FILE_NAME: Final[str] = "apache-test-0.2.tar.gz"
+CURRENT_DIR: Final[pathlib.Path] = pathlib.Path(__file__).parent.resolve()
 
 
 @pytest.fixture
 def page_release_with_file(page: Page) -> Generator[Page]:
     helpers.log_in(page)
+
+    helpers.delete_release_if_exists(page, PROJECT_NAME, VERSION_NAME)
+
     helpers.visit(page, f"/start/{PROJECT_NAME}")
     page.get_by_role("textbox").type(VERSION_NAME)
     page.get_by_role("button", name="Start new release").click()

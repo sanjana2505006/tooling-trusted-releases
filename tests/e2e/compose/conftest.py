@@ -43,7 +43,7 @@ def compose_context(browser: Browser) -> Generator[BrowserContext]:
 
     helpers.log_in(page)
 
-    _delete_release_if_exists(page)
+    helpers.delete_release_if_exists(page, PROJECT_NAME, VERSION_NAME)
 
     helpers.visit(page, f"/start/{PROJECT_NAME}")
     page.locator("input#version_name").fill(VERSION_NAME)
@@ -72,18 +72,6 @@ def page_compose(compose_context: BrowserContext) -> Generator[Page]:
     helpers.visit(page, COMPOSE_URL)
     yield page
     page.close()
-
-
-def _delete_release_if_exists(page: Page) -> None:
-    """Delete the test release if it already exists."""
-    helpers.visit(page, COMPOSE_URL)
-    if not page.url.endswith(COMPOSE_URL.lstrip("/")):
-        return
-    delete_form = page.locator("#delete-draft-form form")
-    if delete_form.count() == 0:
-        return
-    delete_form.get_by_role("button").click()
-    page.wait_for_load_state()
 
 
 def _wait_for_tasks_banner_hidden(page: Page, timeout: int = 30000) -> None:

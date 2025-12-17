@@ -55,6 +55,8 @@ def vote_context(browser: Browser) -> Generator[BrowserContext]:
 
     helpers.log_in(page)
 
+    helpers.delete_release_if_exists(page, PROJECT_NAME, VERSION_NAME)
+
     helpers.visit(page, f"/start/{PROJECT_NAME}")
     page.locator("input#version_name").fill(VERSION_NAME)
     page.get_by_role("button", name="Start new release").click()
