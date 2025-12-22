@@ -194,7 +194,7 @@ class ProjectStatus(schema.Strict):
     doap: str | None = None
     homepage: str
     name: str
-    pmc: str
+    pmc: str | None
     shortdesc: str | None = None
     repository: list[str | dict] = schema.factory(list)
     release: list[Release] = schema.factory(list)
@@ -459,6 +459,10 @@ async def _update_projects(data: db.Session, projects: ProjectsData) -> tuple[in
         # Ideally it would be removed from the upstream data source, which is:
         # https://projects.apache.org/json/foundation/projects.json
         if project_name == "incubator-annotator":
+            continue
+
+        if project_status.pmc is None:
+            log.warning(f"project {project_name} has no PMC, skipping")
             continue
 
         pmc = await data.committee(name=project_status.pmc).get()
