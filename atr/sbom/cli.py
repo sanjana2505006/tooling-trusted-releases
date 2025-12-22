@@ -164,7 +164,11 @@ def command_where(bundle: models.bundle.Bundle) -> None:
 
 def main() -> None:  # noqa: C901
     if len(sys.argv) < 3:
-        print("Usage: python -m atr.sbom <command> <sbom-path>")
+        print("Usage: python -m atr.sbom <COMMAND> <SBOM PATH>")
+        print(
+            "COMMAND can be one of: license, merge, missing, osv, "
+            "outdated, patch-ntia, patch-vuln, scores, validate-cli, validate-py, where"
+        )
         sys.exit(1)
     path = pathlib.Path(sys.argv[2])
     bundle = path_to_bundle(path)
