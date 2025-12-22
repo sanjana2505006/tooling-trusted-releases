@@ -93,7 +93,7 @@ def committee_full_name(c: sql.Committee) -> Divergences:
     )
 
     def trimmed(fn: str | None) -> bool:
-        return False if fn is None else (fn == fn.strip())
+        return False if (fn is None) else (fn == fn.strip())
 
     yield from divergences_predicate(
         trimmed,
@@ -102,7 +102,7 @@ def committee_full_name(c: sql.Committee) -> Divergences:
     )
 
     def not_prefixed(fn: str | None) -> bool:
-        return False if fn is None else (not fn.startswith("Apache "))
+        return False if (fn is None) else (not fn.startswith("Apache "))
 
     yield from divergences_predicate(
         not_prefixed,

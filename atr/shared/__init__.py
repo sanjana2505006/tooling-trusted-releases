@@ -206,7 +206,7 @@ def _warnings_from_vote_result(vote_task: sql.Task | None) -> list[str]:
     # But we'd still need to do some of this parsing and validation
     # We should probably rethink how to send data through tasks
 
-    if not vote_task or (not vote_task.result):
+    if (not vote_task) or (not vote_task.result):
         return ["No vote task result found."]
 
     vote_task_result = vote_task.result

@@ -383,7 +383,7 @@ async def tasks_ongoing_revision(
         .where(
             sql.Task.project_name == project_name,
             sql.Task.version_name == version_name,
-            sql.Task.revision_number == (subquery if revision_number is None else revision_number),
+            sql.Task.revision_number == (subquery if (revision_number is None) else revision_number),
             sql.validate_instrumented_attribute(sql.Task.status).in_(
                 [sql.TaskStatus.QUEUED, sql.TaskStatus.ACTIVE],
             ),

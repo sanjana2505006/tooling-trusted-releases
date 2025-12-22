@@ -63,7 +63,7 @@ class SBOMScoringError(Exception):
 
     def __init__(self, msg: str, context: dict[str, Any] | None = None) -> None:
         super().__init__(msg)
-        self.context = context if context is not None else {}
+        self.context = context if (context is not None) else {}
 
 
 class FileArgs(schema.Strict):
@@ -107,7 +107,7 @@ async def augment(args: FileArgs) -> results.Results | None:
 
     return results.SBOMAugment(
         kind="sbom_augment",
-        path=(new_full_path if new_full_path is not None else full_path),
+        path=(new_full_path if (new_full_path is not None) else full_path),
         bom_version=new_version,
     )
 

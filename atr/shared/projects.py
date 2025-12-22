@@ -202,7 +202,7 @@ class VotePolicyForm(form.Form):
                     raise ValueError("GitHub workflow paths must start with '.github/workflows/'.")
 
         min_hours = self.min_hours
-        if min_hours != 0 and (min_hours < 72 or min_hours > 144):
+        if (min_hours != 0) and ((min_hours < 72) or (min_hours > 144)):
             raise ValueError("Minimum voting period must be 0 or between 72 and 144 hours inclusive.")
 
         return self

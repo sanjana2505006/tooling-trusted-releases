@@ -56,7 +56,7 @@ async def _directory_listing(full_path: pathlib.Path, current_path: str) -> web.
 async def _directory_listing_pre(full_path: pathlib.Path, current_path: str, pre: htm.Block) -> None:
     if current_path:
         parent_path = pathlib.Path(current_path).parent
-        parent_url_path = str(parent_path) if str(parent_path) != "." else ""
+        parent_url_path = str(parent_path) if (str(parent_path) != ".") else ""
         if parent_url_path:
             pre.a(href=util.as_url(path, path=parent_url_path))["../"]
         else:

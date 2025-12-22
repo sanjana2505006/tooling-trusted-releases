@@ -419,26 +419,26 @@ def format_permissions(mode: int) -> str:
         perms = "?"
 
     # Owner permissions
-    perms += "r" if mode & 0o400 else "-"
-    perms += "w" if mode & 0o200 else "-"
-    perms += "x" if mode & 0o100 else "-"
+    perms += "r" if (mode & 0o400) else "-"
+    perms += "w" if (mode & 0o200) else "-"
+    perms += "x" if (mode & 0o100) else "-"
 
     # Group permissions
-    perms += "r" if mode & 0o040 else "-"
-    perms += "w" if mode & 0o020 else "-"
-    perms += "x" if mode & 0o010 else "-"
+    perms += "r" if (mode & 0o040) else "-"
+    perms += "w" if (mode & 0o020) else "-"
+    perms += "x" if (mode & 0o010) else "-"
 
     # Others permissions
-    perms += "r" if mode & 0o004 else "-"
-    perms += "w" if mode & 0o002 else "-"
-    perms += "x" if mode & 0o001 else "-"
+    perms += "r" if (mode & 0o004) else "-"
+    perms += "w" if (mode & 0o002) else "-"
+    perms += "x" if (mode & 0o001) else "-"
 
     return perms
 
 
 async def get_asf_id_or_die() -> str:
     web_session = await session.read()
-    if web_session is None or web_session.uid is None:
+    if (web_session is None) or (web_session.uid is None):
         raise base.ASFQuartException("Not authenticated", errorcode=401)
     return web_session.uid
 
@@ -541,7 +541,7 @@ def is_user_viewing_as_admin(uid: str | None) -> bool:
 
     try:
         app = asfquart.APP
-        if not hasattr(app, "app_id") or not isinstance(app.app_id, str):
+        if (not hasattr(app, "app_id")) or (not isinstance(app.app_id, str)):
             log.error("Cannot get valid app_id to read session for admin view check")
             return True
 
@@ -904,7 +904,7 @@ async def thread_messages(
     messages: list[dict[str, Any]] = []
 
     async for url, status, content in get_urls_as_completed(email_urls):
-        if status != 200 or not content:
+        if (status != 200) or (not content):
             log.warning(f"Failed to fetch email data from {url}: {status}")
             continue
         try:
@@ -1048,7 +1048,7 @@ def _generate_hexdump(data: bytes) -> str:
         hex_part = binascii.hexlify(chunk).decode("ascii")
         hex_part = hex_part.ljust(32)
         hex_part_spaced = " ".join(hex_part[j : j + 2] for j in range(0, len(hex_part), 2))
-        ascii_part = "".join(chr(b) if 32 <= b < 127 else "." for b in chunk)
+        ascii_part = "".join(chr(b) if (32 <= b < 127) else "." for b in chunk)
         line_num = f"{i:08x}"
         hex_lines.append(f"{line_num}  {hex_part_spaced}  |{ascii_part}|")
     return "\n".join(hex_lines)

@@ -126,7 +126,7 @@ async def _deletable_choices(
                 # Disallow deletion of the root directory
                 continue
             d_full = latest_revision_dir / d_rel
-            if await aiofiles.os.path.isdir(d_full) and not await aiofiles.os.listdir(d_full):
+            if (await aiofiles.os.path.isdir(d_full)) and (not await aiofiles.os.listdir(d_full)):
                 empty_deletable_dirs.append(d_rel)
     return sorted([(str(p), str(p)) for p in empty_deletable_dirs])
 

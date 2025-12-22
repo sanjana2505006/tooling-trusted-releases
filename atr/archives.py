@@ -188,7 +188,7 @@ def _archive_extract_safe_process_hardlink(member: tarfile.TarInfo, extract_dir:
 
     link_target = member.linkname or ""
     source_path = _safe_path(extract_dir, link_target)
-    if source_path is None or not os.path.exists(source_path):
+    if (source_path is None) or (not os.path.exists(source_path)):
         log.warning(f"Skipping hard link with invalid target: {member.name} -> {link_target}")
         return
 
@@ -283,7 +283,7 @@ def _zip_archive_extract_member(
     if member_basename.startswith("._"):
         return 0, extracted_paths
 
-    if member.isfile() and (total_extracted + member.size) > max_size:
+    if member.isfile() and ((total_extracted + member.size) > max_size):
         raise ExtractionError(
             f"Extraction would exceed maximum size limit of {max_size} bytes",
             {"max_size": max_size, "current_size": total_extracted, "file_size": member.size},

@@ -351,7 +351,7 @@ def _app_setup_logging(app: base.QuartApp, config_mode: config.Mode, app_config:
     # Only log in the worker process
     @app.before_serving
     async def log_debug_info() -> None:
-        if config_mode == config.Mode.Debug or config_mode == config.Mode.Profiling:
+        if (config_mode == config.Mode.Debug) or (config_mode == config.Mode.Profiling):
             log.info(f"DEBUG        = {config_mode == config.Mode.Debug}")
             log.info(f"ENVIRONMENT  = {config_mode.value}")
             log.info(f"STATE_DIR    = {app_config.STATE_DIR}")

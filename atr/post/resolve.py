@@ -55,7 +55,7 @@ async def _submit(
         _release, voting_round, success_message, error_message = await wacm.vote.resolve(
             project_name,
             version_name,
-            "passed" if vote_result == "Passed" else "failed",
+            "passed" if (vote_result == "Passed") else "failed",
             session.fullname,
             email_body,
         )
@@ -144,9 +144,9 @@ async def _tabulate(session: web.Committer, project_name: str, version_name: str
     return await template.render(
         "resolve-tabulated.html",
         release=release,
-        tabulated_votes=details.votes if details is not None else {},
-        summary=details.summary if details is not None else {},
-        outcome=details.outcome if details is not None else "",
+        tabulated_votes=details.votes if (details is not None) else {},
+        summary=details.summary if (details is not None) else {},
+        outcome=details.outcome if (details is not None) else "",
         resolve_form=resolve_form,
         fetch_error=fetch_error,
         archive_url=archive_url,

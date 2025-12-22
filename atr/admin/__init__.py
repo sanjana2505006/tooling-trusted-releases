@@ -403,7 +403,7 @@ async def delete_test_openpgp_keys_post(session: web.Committer) -> web.Response:
             delete_outcome = await wafc.keys.test_user_delete_all(test_uid)
             deleted_count = delete_outcome.result_or_raise()
 
-        suffix = "s" if deleted_count != 1 else ""
+        suffix = "s" if (deleted_count != 1) else ""
         await quart.flash(
             f"Successfully deleted {deleted_count} OpenPGP key{suffix} and their associated links for test user.",
             "success",
@@ -643,7 +643,7 @@ async def performance(session: web.Committer) -> str:
                 "median": statistics.median(total_times),
                 "min": min(total_times),
                 "max": max(total_times),
-                "stdev": statistics.stdev(total_times) if len(total_times) > 1 else 0,
+                "stdev": statistics.stdev(total_times) if (len(total_times) > 1) else 0,
             },
             "sync": {
                 "mean": statistics.mean(sync_times),
@@ -834,7 +834,7 @@ async def toggle_view_get(session: web.Committer) -> str:
 async def toggle_view_post(session: web.Committer) -> web.WerkzeugResponse:
     """Toggle between admin and user views."""
     app = asfquart.APP
-    if not hasattr(app, "app_id") or not isinstance(app.app_id, str):
+    if (not hasattr(app, "app_id")) or (not isinstance(app.app_id, str)):
         raise TypeError("Internal error: APP has no valid app_id")
 
     cookie_id = app.app_id

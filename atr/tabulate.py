@@ -227,10 +227,10 @@ def _vote_castings(body: str) -> list[tuple[models.tabulate.Vote, str]]:
         if _vote_break(line):
             break
 
-        plus_one = line.startswith("+1") or " +1" in line
-        minus_one = line.startswith("-1") or " -1" in line
+        plus_one = line.startswith("+1") or (" +1" in line)
+        minus_one = line.startswith("-1") or (" -1" in line)
         # We must be more stringent about zero votes, can't just check for "0" in line
-        zero = line in {"0", "-0", "+0"} or line.startswith("0 ") or line.startswith("+0 ") or line.startswith("-0 ")
+        zero = (line in {"0", "-0", "+0"}) or line.startswith("0 ") or line.startswith("+0 ") or line.startswith("-0 ")
         if (plus_one and minus_one) or (plus_one and zero) or (minus_one and zero):
             # Confusing result
             continue

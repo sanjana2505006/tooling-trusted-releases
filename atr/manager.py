@@ -263,7 +263,7 @@ class WorkerManager:
         try:
             async with data.begin():
                 task = await data.task(pid=pid, status=sql.TaskStatus.ACTIVE).get()
-                if not task or not task.started:
+                if (not task) or (not task.started):
                     return False
 
                 task_duration = (datetime.datetime.now(datetime.UTC) - task.started).total_seconds()

@@ -127,7 +127,7 @@ async def verify_github_oidc(token: str) -> dict[str, Any]:
 def _extract_bearer_token(request: quart.Request) -> str:
     header = request.headers.get("Authorization", "")
     scheme, _, token = header.partition(" ")
-    if scheme.lower() != "bearer" or not token:
+    if (scheme.lower() != "bearer") or (not token):
         raise base.ASFQuartException(
             "Authentication required. Please provide a valid Bearer token in the Authorization header", errorcode=401
         )

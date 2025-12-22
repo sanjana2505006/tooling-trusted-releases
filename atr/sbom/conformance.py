@@ -140,7 +140,7 @@ async def assemble_component_supplier(
         links = get_pointer(data, "/links") or []
         homepage = None
         for link in links:
-            if isinstance(link, dict) and link.get("label") == "HOMEPAGE":
+            if isinstance(link, dict) and (link.get("label") == "HOMEPAGE"):
                 homepage = link.get("url")
                 break
         if homepage:

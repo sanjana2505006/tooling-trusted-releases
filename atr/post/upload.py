@@ -65,7 +65,7 @@ async def finalise(
         async with storage.write(session) as write:
             wacp = await write.as_project_committee_participant(project_name)
             number_of_files = len(staged_files)
-            plural = "s" if number_of_files != 1 else ""
+            plural = "s" if (number_of_files != 1) else ""
             description = f"Upload of {number_of_files} file{plural} through web interface"
 
             async with wacp.release.create_and_manage_revision(project_name, version_name, description) as creating:

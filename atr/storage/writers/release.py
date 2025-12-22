@@ -433,7 +433,7 @@ class CommitteeParticipant(FoundationCommitter):
     ) -> int:
         """Process and save the uploaded files into a new draft revision."""
         number_of_files = len(files)
-        description = f"Upload of {number_of_files} file{'' if number_of_files == 1 else 's'} through web interface"
+        description = f"Upload of {number_of_files} file{'' if (number_of_files == 1) else 's'} through web interface"
         async with self.create_and_manage_revision(project_name, version_name, description) as creating:
             # Save each uploaded file to the new revision directory
             for file in files:

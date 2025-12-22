@@ -48,7 +48,7 @@ async def check(args: checks.FunctionArguments) -> results.Results | None:
         f"Checking hash ({algorithm}) for {artifact_abs_path} against {hash_abs_path} (rel: {args.primary_rel_path})"
     )
 
-    hash_func = hashlib.sha256 if algorithm == "sha256" else hashlib.sha512
+    hash_func = hashlib.sha256 if (algorithm == "sha256") else hashlib.sha512
     hash_obj = hash_func()
     try:
         async with aiofiles.open(artifact_abs_path, mode="rb") as f:

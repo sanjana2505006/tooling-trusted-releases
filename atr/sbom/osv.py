@@ -152,7 +152,8 @@ def _assemble_component_vulnerability(
         vulnerability["advisories"] = [
             {"url": r["url"]}
             for r in vuln.references
-            if (r.get("type", "") == "WEB" and "advisories" in r.get("url", "")) or r.get("type", "") == "ADVISORY"
+            if ((r.get("type", "") == "WEB") and ("advisories" in r.get("url", "")))
+            or (r.get("type", "") == "ADVISORY")
         ]
     patch_ops.append(
         models.patch.AddOp(
@@ -217,7 +218,7 @@ async def _fetch_vulnerability_details(
 def _get_source(vuln: models.osv.VulnerabilityDetails) -> dict[str, str]:
     db = vuln.id.split("-")[0]
     web_refs = list(filter(lambda v: v.get("type", "") == "WEB", vuln.references)) if vuln.references else []
-    first_ref = web_refs[0] if len(web_refs) > 0 else None
+    first_ref = web_refs[0] if (len(web_refs) > 0) else None
 
     name = _SOURCE_DATABASE_NAMES.get(db, "Unknown Database")
     source = {"name": name}
@@ -237,7 +238,7 @@ async def _paginate_query(
     page = 0
     while True:
         page += 1
-        if _DEBUG and page > 1:
+        if _DEBUG and (page > 1):
             print(f"[DEBUG] Paginating query (page {page})")
         results = await _fetch_vulnerabilities_for_batch(session, [current_query])
         if not results:

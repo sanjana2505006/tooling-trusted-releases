@@ -368,12 +368,12 @@ def _render_file_row(
         path_display = htpy.strong[htpy.code(".text-danger")[path_str]]
         pass_cell = (
             htpy.span(".text-success", style=num_style)[str(pass_count)]
-            if pass_count > 0
+            if (pass_count > 0)
             else htpy.span(".text-muted", style=num_style)["0"]
         )
         warn_cell = (
             htpy.span(".text-warning", style=num_style)[str(warn_count)]
-            if warn_count > 0
+            if (warn_count > 0)
             else htpy.span(".text-muted", style=num_style)["0"]
         )
         err_cell = htpy.span(".text-danger.fw-bold", style=num_style)[str(err_count)]
@@ -382,7 +382,7 @@ def _render_file_row(
         path_display = htpy.strong[htpy.code(".text-warning")[path_str]]
         pass_cell = (
             htpy.span(".text-success", style=num_style)[str(pass_count)]
-            if pass_count > 0
+            if (pass_count > 0)
             else htpy.span(".text-muted", style=num_style)["0"]
         )
         warn_cell = htpy.span(".text-warning.fw-bold", style=num_style)[str(warn_count)]

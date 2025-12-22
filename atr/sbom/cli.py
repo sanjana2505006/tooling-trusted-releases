@@ -49,7 +49,7 @@ def command_license(bundle: models.bundle.Bundle) -> None:
             license_str = f"{error.license_expression}{scope_str}{unknown_suffix}"
             print(f"  - {name_str}: {license_str}")
         print()
-    if not warnings and not errors:
+    if (not warnings) and (not errors):
         print("All licenses are approved (Category A)")
 
 

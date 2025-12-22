@@ -106,7 +106,7 @@ async def report(session: web.Committer, project: str, version: str, file_path: 
             latest_augment = augment_tasks[0]
             augment_results: list[Any] = [t.result for t in augment_tasks]
             augmented_bom_versions = [
-                r.bom_version for r in augment_results if r is not None and r.bom_version is not None
+                r.bom_version for r in augment_results if (r is not None) and (r.bom_version is not None)
             ]
             if len(augmented_bom_versions) > 0:
                 last_augmented_bom = max(augmented_bom_versions)
@@ -160,7 +160,7 @@ def _outdated_tool_section(block: htm.Block, task_result: results.SBOMToolScore)
                             {result.available_version}."""
                     ]
             else:
-                if result.kind == "missing_metadata" or result.kind == "missing_timestamp":
+                if (result.kind == "missing_metadata") or (result.kind == "missing_timestamp"):
                     # These both return without checking any further tools as they prevent checking
                     block.p[
                         f"""There was a problem with the SBOM detected when trying to
@@ -257,13 +257,13 @@ def _augment_section(
         augments = [t.get("value", "") for t in task_result.atr_props if t.get("name", "") == "asf:atr:augment"]
     if latest_task is not None:
         result: Any = latest_task.result
-        if latest_task.status == sql.TaskStatus.ACTIVE or latest_task.status == sql.TaskStatus.QUEUED:
+        if (latest_task.status == sql.TaskStatus.ACTIVE) or (latest_task.status == sql.TaskStatus.QUEUED):
             block.p["This SBOM is currently being augmented by ATR."]
             return
         if latest_task.status == sql.TaskStatus.FAILED:
             block.p[f"ATR attempted to augment this SBOM but failed: {latest_task.error}"]
             return
-        if last_bom is not None and result.bom_version == last_bom and len(augments) != 0:
+        if (last_bom is not None) and (result.bom_version == last_bom) and (len(augments) != 0):
             block.p["This SBOM was augmented by ATR at revision ", htm.code[augments[-1]], "."]
             return
 
@@ -444,9 +444,9 @@ def _vulnerability_scan_find_completed_task(
 ) -> sql.Task | None:
     """Find the most recent completed OSV scan task for the given revision."""
     for task in osv_tasks:
-        if task.status == sql.TaskStatus.COMPLETED and (task.result is not None):
+        if (task.status == sql.TaskStatus.COMPLETED) and (task.result is not None):
             task_result = task.result
-            if isinstance(task_result, results.SBOMOSVScan) and task_result.revision_number == revision_number:
+            if isinstance(task_result, results.SBOMOSVScan) and (task_result.revision_number == revision_number):
                 return task
     return None
 
@@ -511,7 +511,7 @@ def _vulnerability_scan_results(
                     vulnerabilities=[
                         _cdx_to_osv(v)
                         for v in vulns
-                        if v.affects is not None and component in [a.get("ref") for a in v.affects]
+                        if (v.affects is not None) and (component in [a.get("ref") for a in v.affects])
                     ],
                 ),
             )
@@ -531,7 +531,7 @@ def _cdx_to_osv(cdx: osv.CdxVulnerabilityDetail) -> osv.VulnerabilityDetails:
         severity=score,
         database_specific={"severity": severity},
         references=[{"type": "WEB", "url": a.get("url", "")} for a in cdx.advisories]
-        if cdx.advisories is not None
+        if (cdx.advisories is not None)
         else [],
     )
 

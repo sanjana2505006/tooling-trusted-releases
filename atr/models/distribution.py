@@ -101,7 +101,11 @@ class Data(schema.Lax):
     @pydantic.field_validator("owner_namespace", mode="before")
     @classmethod
     def empty_to_none(cls, v):
-        return None if v is None or (isinstance(v, str) and v.strip() == "") else v
+        if v is None:
+            return None
+        if isinstance(v, str) and (v.strip() == ""):
+            return None
+        return v
 
 
 class Metadata(schema.Strict):

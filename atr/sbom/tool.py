@@ -86,7 +86,7 @@ def outdated_version_core(
         return None
     expected_version_comparable = version_parse(expected_version)
     version_comparable = version_parse(version)
-    if expected_version_comparable is None or version_comparable is None:
+    if (expected_version_comparable is None) or (version_comparable is None):
         # Couldn't parse the version
         return None
     # If the version used is less than the version available

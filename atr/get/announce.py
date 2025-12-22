@@ -220,7 +220,7 @@ def _render_mailing_list_with_warning(choices: list[tuple[str, str]], default_va
 
 def _render_download_path_field(default_value: str, description: str) -> htm.Element:
     """Render the download path suffix field with custom help text."""
-    base_text = description.split(" plus this suffix")[0] if " plus this suffix" in description else description
+    base_text = description.split(" plus this suffix")[0] if (" plus this suffix" in description) else description
     return htm.div[
         htpy.input(
             "#download_path_suffix.form-control",

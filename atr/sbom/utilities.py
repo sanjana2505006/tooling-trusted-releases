@@ -144,7 +144,7 @@ def cdx_severity_to_osv(severity: list[dict[str, str | float]]) -> tuple[str | N
 
 
 def _extract_cdx_score(type: str, score_str: str) -> dict[str, str | float]:
-    if "CVSS" in score_str or "CVSS" in type:
+    if ("CVSS" in score_str) or ("CVSS" in type):
         components = re.match(r"CVSS:(?P<version>\d+\.?\d*)/.+", score_str)
         parsed = None
         vector = score_str
@@ -153,9 +153,9 @@ def _extract_cdx_score(type: str, score_str: str) -> dict[str, str | float]:
             parsed = cvss.CVSS2(vector)
         else:
             version = components.group("version")
-            if "3" in version or "V3" in type:
+            if ("3" in version) or ("V3" in type):
                 parsed = cvss.CVSS3(vector)
-            elif "4" in version or "V4" in type:
+            elif ("4" in version) or ("V4" in type):
                 parsed = cvss.CVSS4(vector)
         if parsed is not None:
             # Pull a different score depending on which sections are filled out

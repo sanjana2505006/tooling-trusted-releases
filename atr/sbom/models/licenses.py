@@ -49,6 +49,6 @@ class Issue(Strict):
         return value if isinstance(value, Category) else Category(value)
 
     def __str__(self):
-        type_str = "Component" if self.component_type is None else self.component_type
-        version_str = f"@{self.component_version}" if self.component_version != "UNKNOWN" else ""
+        type_str = "Component" if (self.component_type is None) else self.component_type
+        version_str = f"@{self.component_version}" if (self.component_version != "UNKNOWN") else ""
         return f"{type_str} {self.component_name}{version_str} declares license {self.license_expression}"

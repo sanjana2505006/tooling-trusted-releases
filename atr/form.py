@@ -612,7 +612,7 @@ def _get_choices(field_info: pydantic.fields.FieldInfo) -> list[tuple[str, str]]
 
     if origin is list:
         args = get_args(annotation)
-        if args and get_origin(args[0]) is Literal:
+        if args and (get_origin(args[0]) is Literal):
             return [(v, v) for v in get_args(args[0])]
 
     # Check for plain enum types, e.g. when Pydantic unwraps form.Enum[T]
@@ -638,7 +638,7 @@ def _get_widget_classes(widget_type: Widget, has_errors: list[str] | None) -> st
 
 def _get_widget_type(field_info: pydantic.fields.FieldInfo) -> Widget:  # noqa: C901
     json_schema_extra = field_info.json_schema_extra or {}
-    if isinstance(json_schema_extra, dict) and "widget" in json_schema_extra:
+    if isinstance(json_schema_extra, dict) and ("widget" in json_schema_extra):
         widget_value = json_schema_extra["widget"]
         if isinstance(widget_value, str):
             try:
@@ -725,13 +725,13 @@ def _parse_dynamic_choices(
         if isinstance(default_value[0], tuple) and (len(default_value[0]) == 2):
             # List of (value, label) tuples
             choices = default_value
-            selected_value = field_value if not isinstance(field_value, list) else None
+            selected_value = field_value if (not isinstance(field_value, list)) else None
             return choices, selected_value
         else:
             # List of simple values
             choices = [(val, val) for val in default_value]
             selected_value = (
-                field_value if not isinstance(field_value, list) else (default_value[0] if default_value else None)
+                field_value if (not isinstance(field_value, list)) else (default_value[0] if default_value else None)
             )
             return choices, selected_value
 
@@ -1023,4 +1023,4 @@ def _render_widget(  # noqa: C901
         error_div = htm.div(".invalid-feedback.d-block")[error_text]
         elements.append(error_div)
 
-    return htm.div[elements] if len(elements) > 1 else elements[0]
+    return htm.div[elements] if (len(elements) > 1) else elements[0]

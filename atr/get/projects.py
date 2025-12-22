@@ -162,7 +162,7 @@ async def view(session: web.Committer, name: str) -> web.WerkzeugResponse | str:
     title_row = htm.div(".row")[
         htm.div(".col-md")[htm.h1[project.display_name]],
         htm.div(".col-sm-auto")[htm.span(".badge.text-bg-secondary")[project.status.value.lower()]]
-        if project.status.value.lower() != "active"
+        if (project.status.value.lower() != "active")
         else "",
     ]
     page.append(title_row)
@@ -233,7 +233,7 @@ def _render_categories_section(project: sql.Project) -> htm.Element:
                     ".btn-close.btn-close-white.ms-1.page-remove-tag", type="submit", aria_label=f"Remove {cat}"
                 ),
             ]
-            if cat not in registry.FORBIDDEN_PROJECT_CATEGORIES
+            if (cat not in registry.FORBIDDEN_PROJECT_CATEGORIES)
             else ""
         )
         badge = htm.div(".badge.bg-primary.d-inline-flex.align-items-center.px-2.py-1")[
