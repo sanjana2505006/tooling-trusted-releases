@@ -207,12 +207,19 @@ class Recorder:
         self.__input_hash = await _compute_file_hash(path)
 
         async with db.session() as data:
-            stmt = (
-                sqlmodel.select(sql.CheckResult)
+            via = sql.validate_instrumented_attribute
+            subquery = (
+                sqlmodel.select(
+                    sql.CheckResult.member_rel_path,
+                    sqlmodel.func.max(via(sql.CheckResult.id)).label("max_id"),
+                )
                 .where(sql.CheckResult.checker == self.checker)
                 .where(sql.CheckResult.input_hash == self.__input_hash)
                 .where(sql.CheckResult.primary_rel_path == self.primary_rel_path)
+                .group_by(sql.CheckResult.member_rel_path)
+                .subquery()
             )
+            stmt = sqlmodel.select(sql.CheckResult).join(subquery, via(sql.CheckResult.id) == subquery.c.max_id)
             results = await data.execute(stmt)
             cached_results = results.scalars().all()
 

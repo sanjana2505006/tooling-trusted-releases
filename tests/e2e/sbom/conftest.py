@@ -46,6 +46,7 @@ def page_release_with_file(page: Page) -> Generator[Page]:
     helpers.visit(page, f"/upload/{PROJECT_NAME}/{VERSION_NAME}")
     page.locator('input[name="file_data"]').set_input_files(f"{CURRENT_DIR}/../test_files/{FILE_NAME}")
     page.get_by_role("button", name="Add files").click()
+    page.wait_for_url(f"**/compose/{PROJECT_NAME}/{VERSION_NAME}")
     helpers.visit(page, f"/compose/{PROJECT_NAME}/{VERSION_NAME}")
     page.wait_for_selector("#ongoing-tasks-banner", state="hidden")
     yield page
