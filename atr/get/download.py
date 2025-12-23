@@ -27,6 +27,7 @@ import zipstream
 import atr.blueprints.get as get
 import atr.config as config
 import atr.db as db
+import atr.form as form
 import atr.htm as htm
 import atr.mapping as mapping
 import atr.models.sql as sql
@@ -141,20 +142,23 @@ async def _download_or_list(project_name: str, version_name: str, file_path: str
 
     # await session.check_access(project_name)
 
-    # Check that path is relative
-    original_path = pathlib.Path(file_path)
-    if (file_path != ".") and (not original_path.is_relative_to(original_path.anchor)):
-        raise web.FlashError("Path must be relative")
+    # Validate the path, and allow "." for root directory
+    if file_path == ".":
+        validated_path = pathlib.Path(".")
+    else:
+        validated_path = form.to_relpath(file_path)
+        if validated_path is None:
+            raise base.ASFQuartException("Invalid file path", errorcode=400)
 
     # We allow downloading files from any phase
     async with db.session() as data:
         release = await data.release(project_name=project_name, version=version_name).demand(
             base.ASFQuartException("Release does not exist", errorcode=404)
         )
-    full_path = util.release_directory(release) / file_path
+    full_path = util.release_directory(release) / validated_path
 
     if await aiofiles.os.path.isdir(full_path):
-        return await _list(original_path, full_path, project_name, version_name, file_path)
+        return await _list(validated_path, full_path, project_name, version_name, str(validated_path))
 
     # Check that the path is a regular file
     if not await aiofiles.os.path.isfile(full_path):
@@ -166,7 +170,7 @@ async def _download_or_list(project_name: str, version_name: str, file_path: str
 
     # Send the file with original filename
     return await quart.send_file(
-        full_path, as_attachment=True, attachment_filename=original_path.name, mimetype="application/octet-stream"
+        full_path, as_attachment=True, attachment_filename=validated_path.name, mimetype="application/octet-stream"
     )
 
 

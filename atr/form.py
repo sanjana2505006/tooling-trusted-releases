@@ -22,6 +22,7 @@ import json
 import pathlib
 import re
 import types
+import unicodedata
 from typing import TYPE_CHECKING, Annotated, Any, Final, Literal, TypeAliasType, get_args, get_origin
 
 import htpy
@@ -417,22 +418,23 @@ def to_filename(v: Any) -> pathlib.Path | None:
     if not v:
         return None
 
-    path = pathlib.Path(str(v))
+    name = str(v).strip()
 
-    if len(path.parts) != 1:
-        raise ValueError("Expected a filename, not a path containing directories")
+    if not name:
+        raise ValueError("Filename cannot be empty")
 
-    if path.is_absolute():
-        # This branch should be unreachable
-        raise ValueError("Absolute paths are not allowed")
+    if "\0" in name:
+        raise ValueError("Filename cannot contain null bytes")
 
-    if "." in path.parts:
-        raise ValueError("Self directory references (.) are not allowed")
+    name = unicodedata.normalize("NFC", name)
 
-    if ".." in path.parts:
-        raise ValueError("Parent directory references (..) are not allowed")
+    if ("/" in name) or ("\\" in name):
+        raise ValueError("Filename cannot contain path separators")
 
-    return path
+    if name in (".", ".."):
+        raise ValueError("Invalid filename")
+
+    return pathlib.Path(name)
 
 
 def to_int(v: Any) -> int:
@@ -450,6 +452,36 @@ def to_optional_url(v: Any) -> pydantic.HttpUrl | None:
     return pydantic.TypeAdapter(pydantic.HttpUrl).validate_python(v)
 
 
+def to_relpath(v: Any) -> pathlib.Path | None:
+    """Validate a relative filesystem path."""
+    if not v:
+        return None
+
+    path_str = str(v).strip()
+    if not path_str:
+        raise ValueError("Path cannot be empty")
+
+    validated = _validate_relpath_string(path_str)
+    return pathlib.Path(validated)
+
+
+def to_relpath_list(v: Any) -> list[pathlib.Path]:
+    if isinstance(v, list):
+        result = []
+        for item in v:
+            validated = to_relpath(item)
+            if validated is None:
+                raise ValueError("Path list items cannot be empty")
+            result.append(validated)
+        return result
+    if isinstance(v, str):
+        validated = to_relpath(v)
+        if validated is None:
+            raise ValueError("Path cannot be empty")
+        return [validated]
+    raise ValueError(f"Expected a path or list of paths, got {type(v).__name__}")
+
+
 def to_str_list(v: Any) -> list[str]:
     # TODO: Might need to handle the empty case
     if isinstance(v, list):
@@ -460,23 +492,16 @@ def to_str_list(v: Any) -> list[str]:
 
 
 def to_url_path(v: Any) -> str | None:
+    """Validate a relative URL style path, e.g. for SVN paths."""
     if not v:
         return None
 
-    url_path = str(v)
+    path_str = str(v).strip()
+    if not path_str:
+        raise ValueError("Path cannot be empty")
 
-    if url_path.startswith("/"):
-        raise ValueError("Absolute paths are not allowed")
-
-    segments = url_path.split("/")
-
-    if "." in segments:
-        raise ValueError("Self directory references (.) are not allowed")
-
-    if ".." in segments:
-        raise ValueError("Parent directory references (..) are not allowed")
-
-    return url_path
+    validated = _validate_relpath_string(path_str)
+    return str(validated)
 
 
 # Validator types come before other functions
@@ -533,6 +558,18 @@ OptionalURL = Annotated[
     pydantic.HttpUrl | None,
     functional_validators.BeforeValidator(to_optional_url),
     pydantic.Field(default=None),
+]
+
+RelPath = Annotated[
+    pathlib.Path | None,
+    functional_validators.BeforeValidator(to_relpath),
+    pydantic.Field(default=None),
+]
+
+RelPathList = Annotated[
+    list[pathlib.Path],
+    functional_validators.BeforeValidator(to_relpath_list),
+    pydantic.Field(default_factory=list),
 ]
 
 StrList = Annotated[
@@ -1027,3 +1064,35 @@ def _render_widget(  # noqa: C901
         elements.append(error_div)
 
     return htm.div[elements] if (len(elements) > 1) else elements[0]
+
+
+def _validate_relpath_string(path_str: str) -> pathlib.PurePosixPath:
+    if "\0" in path_str:
+        raise ValueError("Path cannot contain null bytes")
+
+    path_str = unicodedata.normalize("NFC", path_str)
+
+    if "\\" in path_str:
+        raise ValueError("Path cannot contain backslashes")
+
+    # PurePosixPath normalises empty components
+    # Therefore, we must do this check on the path string
+    if "//" in path_str:
+        raise ValueError("Path cannot contain //")
+
+    # Check for absolute paths using both POSIX and Windows semantics
+    # We don't support Windows paths, but we want to detect all bad inputs
+    # PurePosixPath doesn't recognise Windows drive letters as absolute
+    # PureWindowsPath treats leading "/" differently
+    posix_path = pathlib.PurePosixPath(path_str)
+    windows_path = pathlib.PureWindowsPath(path_str)
+    if posix_path.is_absolute() or windows_path.is_absolute():
+        raise ValueError("Absolute paths are not allowed")
+
+    for part in posix_path.parts:
+        if part == "..":
+            raise ValueError("Parent directory references (..) are not allowed")
+        if part == ".":
+            raise ValueError("Self directory references (.) are not allowed")
+
+    return posix_path

@@ -28,6 +28,7 @@ import werkzeug.wrappers.response as response
 
 import atr.blueprints.post as post
 import atr.db as db
+import atr.form as form
 import atr.get as get
 import atr.log as log
 import atr.shared as shared
@@ -118,9 +119,12 @@ async def stage(
     if (not file) or (not file.filename):
         return _json_error("No file provided", 400)
 
-    filename = pathlib.Path(file.filename).name
-    if (not filename) or (filename in (".", "..")):
+    # Extract basename and validate
+    basename = pathlib.Path(file.filename).name
+    validated_filename = form.to_filename(basename)
+    if validated_filename is None:
         return _json_error("Invalid filename", 400)
+    filename = str(validated_filename)
 
     await aiofiles.os.makedirs(staging_dir, exist_ok=True)
 

@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import pathlib
 from collections.abc import Awaitable, Callable
 from typing import Annotated, Literal
 
@@ -33,23 +32,24 @@ type REMOVE_RC_TAGS = Literal["REMOVE_RC_TAGS"]
 
 class DeleteEmptyDirectoryForm(form.Form):
     variant: DELETE_DIR = form.value(DELETE_DIR)
-    directory_to_delete: str = form.label("Directory to delete", widget=form.Widget.SELECT)
+    directory_to_delete: form.RelPath = form.label("Directory to delete", widget=form.Widget.SELECT)
 
 
 class MoveFileForm(form.Form):
     variant: MOVE_FILE = form.value(MOVE_FILE)
-    source_files: form.StrList = form.label("Files to move")
-    target_directory: str = form.label("Target directory")
+    source_files: form.RelPathList = form.label("Files to move")
+    target_directory: form.RelPath = form.label("Target directory")
 
     @pydantic.model_validator(mode="after")
     def validate_move(self) -> "MoveFileForm":
         if not self.source_files:
             raise ValueError("Please select at least one file to move.")
 
-        source_paths = [pathlib.Path(sf) for sf in self.source_files]
-        target_dir = pathlib.Path(self.target_directory)
-        for source_path in source_paths:
-            if source_path.parent == target_dir:
+        if self.target_directory is None:
+            raise ValueError("Target directory is required.")
+
+        for source_path in self.source_files:
+            if source_path.parent == self.target_directory:
                 raise ValueError(f"Target directory cannot be the same as the source directory for {source_path.name}.")
         return self
 

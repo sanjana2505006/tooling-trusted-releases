@@ -15,8 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import pathlib
-
 import quart
 
 import atr.blueprints.post as post
@@ -50,7 +48,9 @@ async def _delete_empty_directory(
     version_name: str,
     respond: shared.finish.Respond,
 ) -> tuple[web.QuartResponse, int] | web.WerkzeugResponse:
-    dir_to_delete_rel = pathlib.Path(delete_form.directory_to_delete)
+    dir_to_delete_rel = delete_form.directory_to_delete
+    if dir_to_delete_rel is None:
+        return await respond(400, "No directory specified.")
     try:
         async with storage.write(session) as write:
             wacp = await write.as_project_committee_member(project_name)
@@ -71,8 +71,10 @@ async def _move_file_to_revision(
     version_name: str,
     respond: shared.finish.Respond,
 ) -> tuple[web.QuartResponse, int] | web.WerkzeugResponse:
-    source_files_rel = [pathlib.Path(sf) for sf in move_form.source_files]
-    target_dir_rel = pathlib.Path(move_form.target_directory)
+    source_files_rel = move_form.source_files
+    target_dir_rel = move_form.target_directory
+    if target_dir_rel is None:
+        return await respond(400, "No target directory specified.")
     try:
         async with storage.write(session) as write:
             wacp = await write.as_project_committee_member(project_name)

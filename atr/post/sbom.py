@@ -17,19 +17,23 @@
 
 from __future__ import annotations
 
-import pathlib
+from typing import TYPE_CHECKING
 
 import asfquart.base as base
 import quart
 
 import atr.blueprints.post as post
 import atr.db as db
+import atr.form as form
 import atr.get as get
 import atr.log as log
 import atr.shared as shared
 import atr.storage as storage
 import atr.util as util
 import atr.web as web
+
+if TYPE_CHECKING:
+    import pathlib
 
 
 @post.committer("/sbom/report/<project>/<version>/<path:file_path>")
@@ -39,22 +43,24 @@ async def report(
 ) -> web.WerkzeugResponse:
     await session.check_access(project)
 
+    validated_path = form.to_relpath(file_path)
+    if validated_path is None:
+        raise base.ASFQuartException("Invalid file path", errorcode=400)
+
     match sbom_form:
         case shared.sbom.AugmentSBOMForm():
-            return await _augment(session, project, version, file_path)
+            return await _augment(session, project, version, validated_path)
 
         case shared.sbom.ScanSBOMForm():
-            return await _scan(session, project, version, file_path)
+            return await _scan(session, project, version, validated_path)
 
 
 async def _augment(
-    session: web.Committer, project_name: str, version_name: str, file_path: str
+    session: web.Committer, project_name: str, version_name: str, rel_path: pathlib.Path
 ) -> web.WerkzeugResponse:
     """Augment a CycloneDX SBOM file."""
-    rel_path = pathlib.Path(file_path)
-
     # Check that the file is a .cdx.json archive before creating a revision
-    if not (file_path.endswith(".cdx.json")):
+    if not (rel_path.name.endswith(".cdx.json")):
         raise base.ASFQuartException("SBOM augmentation is only supported for .cdx.json files", errorcode=400)
 
     try:
@@ -93,11 +99,11 @@ async def _augment(
     )
 
 
-async def _scan(session: web.Committer, project_name: str, version_name: str, file_path: str) -> web.WerkzeugResponse:
+async def _scan(
+    session: web.Committer, project_name: str, version_name: str, rel_path: pathlib.Path
+) -> web.WerkzeugResponse:
     """Scan a CycloneDX SBOM file for vulnerabilities using OSV."""
-    rel_path = pathlib.Path(file_path)
-
-    if not (file_path.endswith(".cdx.json")):
+    if not (rel_path.name.endswith(".cdx.json")):
         raise base.ASFQuartException("OSV scanning is only supported for .cdx.json files", errorcode=400)
 
     try:

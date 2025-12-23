@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 import datetime
-import pathlib
 
 import aiofiles.os
 import aioshutil
@@ -79,7 +78,10 @@ async def delete_file(
     """Delete a specific file from the release candidate, creating a new revision."""
     await session.check_access(project_name)
 
-    rel_path_to_delete = pathlib.Path(str(delete_file_form.file_path))
+    rel_path_to_delete = delete_file_form.file_path
+    if rel_path_to_delete is None:
+        await quart.flash("No file path specified", "error")
+        return await session.redirect(get.compose.selected, project_name=project_name, version_name=version_name)
 
     try:
         async with storage.write(session) as write:
@@ -133,7 +135,10 @@ async def hashgen(session: web.Committer, project_name: str, version_name: str, 
     """Generate an sha512 hash file for a candidate draft file, creating a new revision."""
     await session.check_access(project_name)
 
-    rel_path = pathlib.Path(file_path)
+    rel_path = form.to_relpath(file_path)
+    if rel_path is None:
+        await quart.flash("Invalid file path", "error")
+        return await session.redirect(get.compose.selected, project_name=project_name, version_name=version_name)
 
     try:
         async with storage.write(session) as write:
@@ -159,7 +164,10 @@ async def sbomgen(session: web.Committer, project_name: str, version_name: str, 
     """Generate a CycloneDX SBOM file for a candidate draft file, creating a new revision."""
     await session.check_access(project_name)
 
-    rel_path = pathlib.Path(file_path)
+    rel_path = form.to_relpath(file_path)
+    if rel_path is None:
+        await quart.flash("Invalid file path", "error")
+        return await session.redirect(get.compose.selected, project_name=project_name, version_name=version_name)
 
     # Check that the file is a .tar.gz archive before creating a revision
     if not (file_path.endswith(".tar.gz") or file_path.endswith(".tgz") or file_path.endswith(".zip")):

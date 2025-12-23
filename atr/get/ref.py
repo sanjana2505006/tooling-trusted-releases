@@ -22,6 +22,7 @@ import quart
 
 import atr.blueprints.get as get
 import atr.config as config
+import atr.form as form
 import atr.web as web
 
 # Perhaps GitHub will get around to implementing symbol permalinks:
@@ -35,13 +36,7 @@ async def resolve(session: web.Committer | None, ref_path: str) -> web.WerkzeugR
 
     if ":" in ref_path:
         file_path_str, symbol = ref_path.rsplit(":", 1)
-        file_path = project_root / file_path_str
-
-        try:
-            resolved_file = file_path.resolve()
-            resolved_file.relative_to(project_root)
-        except (FileNotFoundError, ValueError):
-            quart.abort(404)
+        resolved_file, validated_path_str = _validate_and_resolve_path(file_path_str, project_root)
 
         if (not resolved_file.exists()) or (not resolved_file.is_file()):
             quart.abort(404)
@@ -51,19 +46,12 @@ async def resolve(session: web.Committer | None, ref_path: str) -> web.WerkzeugR
         if line_number is None:
             quart.abort(404)
 
-        github_url = f"https://github.com/apache/tooling-trusted-releases/blob/main/{file_path_str}#L{line_number}"
+        github_url = f"https://github.com/apache/tooling-trusted-releases/blob/main/{validated_path_str}#L{line_number}"
         return quart.redirect(github_url, code=303)
 
     is_directory = ref_path.endswith("/")
     path_str = ref_path.rstrip("/")
-
-    file_path = project_root / path_str
-
-    try:
-        resolved_path = file_path.resolve()
-        resolved_path.relative_to(project_root)
-    except (FileNotFoundError, ValueError):
-        quart.abort(404)
+    resolved_path, validated_path_str = _validate_and_resolve_path(path_str, project_root)
 
     if not resolved_path.exists():
         quart.abort(404)
@@ -71,11 +59,11 @@ async def resolve(session: web.Committer | None, ref_path: str) -> web.WerkzeugR
     if is_directory:
         if not resolved_path.is_dir():
             quart.abort(404)
-        github_url = f"https://github.com/apache/tooling-trusted-releases/tree/main/{path_str}"
+        github_url = f"https://github.com/apache/tooling-trusted-releases/tree/main/{validated_path_str}"
     else:
         if not resolved_path.is_file():
             quart.abort(404)
-        github_url = f"https://github.com/apache/tooling-trusted-releases/blob/main/{path_str}"
+        github_url = f"https://github.com/apache/tooling-trusted-releases/blob/main/{validated_path_str}"
 
     return quart.redirect(github_url, code=303)
 
@@ -100,3 +88,20 @@ async def _resolve_symbol_to_line(file_path: pathlib.Path, symbol: str) -> int |
                 return node.lineno
 
     return None
+
+
+def _validate_and_resolve_path(path_str: str, project_root: pathlib.Path) -> tuple[pathlib.Path, str]:
+    validated_path = form.to_relpath(path_str)
+    if validated_path is None:
+        quart.abort(400)
+    validated_path_str = str(validated_path)
+
+    file_path = project_root / validated_path
+
+    try:
+        resolved_path = file_path.resolve()
+        resolved_path.relative_to(project_root)
+    except (FileNotFoundError, ValueError):
+        quart.abort(404)
+
+    return resolved_path, validated_path_str

@@ -354,6 +354,8 @@ def _app_setup_logging(app: base.QuartApp, config_mode: config.Mode, app_config:
 
 def _create_app(app_config: type[config.AppConfig]) -> base.QuartApp:
     """Create and configure the application."""
+    if os.sep != "/":
+        raise RuntimeError('ATR requires a POSIX compatible filesystem where os.sep is "/"')
     config_mode = config.get_mode()
     _app_dirs_setup(app_config)
     log.performance_init()

@@ -16,12 +16,12 @@
 # under the License.
 
 import datetime
-import pathlib
 
 import aiofiles.os
 import asfquart.base as base
 
 import atr.blueprints.get as get
+import atr.form as form
 import atr.models.sql as sql
 import atr.storage as storage
 import atr.template as template
@@ -33,6 +33,10 @@ import atr.web as web
 async def selected_path(session: web.Committer, project_name: str, version_name: str, rel_path: str) -> str:
     """Show the report for a specific file."""
     await session.check_access(project_name)
+
+    validated_path = form.to_relpath(rel_path)
+    if validated_path is None:
+        raise base.ASFQuartException("Invalid file path", errorcode=400)
 
     # If the draft is not found, we try to get the release candidate
     try:
@@ -46,7 +50,7 @@ async def selected_path(session: web.Committer, project_name: str, version_name:
         raise base.ASFQuartException("Release has no committee", errorcode=500)
 
     # TODO: When we do more than one thing in a dir, we should use the revision directory directly
-    abs_path = util.release_directory(release) / rel_path
+    abs_path = util.release_directory(release) / validated_path
     if release.latest_revision_number is None:
         raise base.ASFQuartException("Release has no revision", errorcode=500)
 
@@ -60,10 +64,10 @@ async def selected_path(session: web.Committer, project_name: str, version_name:
     # Get all check results for this file
     async with storage.read() as read:
         ragp = read.as_general_public()
-        check_results = await ragp.checks.by_release_path(release, pathlib.Path(rel_path))
+        check_results = await ragp.checks.by_release_path(release, validated_path)
 
     file_data = {
-        "filename": pathlib.Path(rel_path).name,
+        "filename": validated_path.name,
         "bytes_size": file_size,
         "uploaded": datetime.datetime.fromtimestamp(modified, tz=datetime.UTC),
     }
@@ -72,7 +76,7 @@ async def selected_path(session: web.Committer, project_name: str, version_name:
         "report-selected-path.html",
         project_name=project_name,
         version_name=version_name,
-        rel_path=rel_path,
+        rel_path=str(validated_path),
         package=file_data,
         release=release,
         primary_results=check_results.primary_results_list,

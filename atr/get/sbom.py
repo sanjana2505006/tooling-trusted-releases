@@ -44,6 +44,11 @@ if TYPE_CHECKING:
 async def report(session: web.Committer, project: str, version: str, file_path: str) -> str:
     await session.check_access(project)
 
+    validated_path = form.to_relpath(file_path)
+    if validated_path is None:
+        raise base.ASFQuartException("Invalid file path", errorcode=400)
+    validated_path_str = str(validated_path)
+
     # If the draft is not found, we try to get the release candidate
     try:
         release = await session.release(project, version, with_committee=True)
@@ -60,7 +65,7 @@ async def report(session: web.Committer, project: str, version: str, file_path: 
                 version_name=version,
                 revision_number=release.latest_revision_number,
                 task_type=sql.TaskType.SBOM_TOOL_SCORE,
-                primary_rel_path=file_path,
+                primary_rel_path=validated_path_str,
             )
             .order_by(sql.sqlmodel.desc(via(sql.Task.completed)))
             .all()
@@ -70,7 +75,7 @@ async def report(session: web.Committer, project: str, version: str, file_path: 
                 project_name=project,
                 version_name=version,
                 task_type=sql.TaskType.SBOM_AUGMENT,
-                primary_rel_path=file_path,
+                primary_rel_path=validated_path_str,
             )
             .order_by(sql.sqlmodel.desc(via(sql.Task.completed)))
             .all()
@@ -81,7 +86,7 @@ async def report(session: web.Committer, project: str, version: str, file_path: 
                 project_name=project,
                 version_name=version,
                 task_type=sql.TaskType.SBOM_OSV_SCAN,
-                primary_rel_path=file_path,
+                primary_rel_path=validated_path_str,
                 revision_number=release.latest_revision_number,
             )
             .order_by(sql.sqlmodel.desc(via(sql.Task.added)))
@@ -123,7 +128,7 @@ async def report(session: web.Committer, project: str, version: str, file_path: 
         vulnerabilities = []
 
     _vulnerability_scan_section(
-        block, project, version, file_path, task_result, vulnerabilities, osv_tasks, is_release_candidate
+        block, project, version, validated_path_str, task_result, vulnerabilities, osv_tasks, is_release_candidate
     )
 
     _outdated_tool_section(block, task_result)

@@ -18,6 +18,7 @@
 from typing import Literal
 
 import atr.blueprints.get as get
+import atr.form as form
 import atr.get.compose as compose
 import atr.get.finish as finish
 import atr.get.vote as vote
@@ -128,9 +129,13 @@ async def selected_path(session: web.Committer, project_name: str, version_name:
     """View the content of a specific file in a release (any phase)."""
     await session.check_access(project_name)
 
+    validated_path = form.to_relpath(file_path)
+    if validated_path is None:
+        raise web.FlashError("Invalid file path")
+
     release = await session.release(project_name, version_name, phase=None)
     _max_view_size = 512 * 1024
-    full_path = util.release_directory(release) / file_path
+    full_path = util.release_directory(release) / validated_path
     content_listing = await util.archive_listing(full_path)
     content, is_text, is_truncated, error_message = await util.read_file_for_viewer(full_path, _max_view_size)
 
@@ -141,7 +146,7 @@ async def selected_path(session: web.Committer, project_name: str, version_name:
     block.a(href=back_url, class_="atr-back-link")[f"← Back to {phase_name} files"]
 
     block.div(".p-3.mt-4.mb-4.bg-light.border.rounded")[
-        htm.h2(".mt-0")[f"Viewing file: {file_path}"],
+        htm.h2(".mt-0")[f"Viewing file: {validated_path}"],
         htm.p(".mb-0")[htm.strong["Release:"], " ", release.name],
     ]
 
@@ -166,7 +171,7 @@ async def selected_path(session: web.Committer, project_name: str, version_name:
         block.div(".alert.alert-secondary")["No content available for this file."]
 
     return await template.blank(
-        f"View {release.project.short_display_name}/{release.version}/{file_path}", content=block.collect()
+        f"View {release.project.short_display_name}/{release.version}/{validated_path}", content=block.collect()
     )
 
 

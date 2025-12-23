@@ -23,6 +23,7 @@ import aiofiles.os
 import quart
 
 import atr.blueprints.get as get
+import atr.form as form
 import atr.htm as htm
 import atr.util as util
 import atr.web as web
@@ -34,7 +35,10 @@ async def path(session: web.Committer, path: str) -> web.QuartResponse:
     # This route is for debugging
     # When developing locally, there is no proxy to view the downloads directory
     # Therefore this path acts as a way to check the contents of that directory
-    return await _path(session, path)
+    validated_path = form.to_relpath(path)
+    if validated_path is None:
+        return quart.abort(400)
+    return await _path(session, str(validated_path))
 
 
 @get.committer("/published/")

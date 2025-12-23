@@ -25,6 +25,7 @@ import quart
 
 import atr.blueprints.get as get
 import atr.config as config
+import atr.form as form
 import atr.template as template
 import atr.web as web
 
@@ -55,7 +56,10 @@ async def index(session: web.Committer | None) -> str:
 
 @get.public("/docs/<path:page>")
 async def page(session: web.Committer | None, page: str) -> str:
-    return await _serve_docs_page(page)
+    validated_page = form.to_relpath(page)
+    if validated_page is None:
+        quart.abort(400)
+    return await _serve_docs_page(str(validated_page))
 
 
 async def _serve_docs_page(page: str) -> str:

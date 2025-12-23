@@ -23,7 +23,6 @@ import base64
 import contextlib
 import datetime
 import hashlib
-import pathlib
 from typing import TYPE_CHECKING, Final
 
 import aiofiles.os
@@ -35,6 +34,7 @@ import sqlmodel
 import atr.analysis as analysis
 import atr.config as config
 import atr.db as db
+import atr.form as form
 import atr.log as log
 import atr.models.api as api
 import atr.models.sql as sql
@@ -43,6 +43,7 @@ import atr.storage.types as types
 import atr.util as util
 
 if TYPE_CHECKING:
+    import pathlib
     from collections.abc import AsyncGenerator, Sequence
 
     import werkzeug.datastructures as datastructures
@@ -406,10 +407,12 @@ class CommitteeParticipant(FoundationCommitter):
 
     async def upload_file(self, args: api.ReleaseUploadArgs) -> sql.Revision:
         file_bytes = base64.b64decode(args.content, validate=True)
-        file_path = args.relpath.lstrip("/")
-        description = f"Upload via API: {file_path}"
+        validated_path = form.to_relpath(args.relpath)
+        if validated_path is None:
+            raise storage.AccessError("Invalid file path")
+        description = f"Upload via API: {validated_path}"
         async with self.create_and_manage_revision(args.project, args.version, description) as creating:
-            target_path = pathlib.Path(creating.interim_path) / file_path
+            target_path = creating.interim_path / validated_path
             await aiofiles.os.makedirs(target_path.parent, exist_ok=True)
             if target_path.exists():
                 raise storage.AccessError("File already exists")
@@ -442,12 +445,13 @@ class CommitteeParticipant(FoundationCommitter):
                 if not file_name:
                     if not file.filename:
                         raise storage.AccessError("No filename provided")
-                    # Use the original name
-                    relative_file_path = pathlib.Path(file.filename)
+                    # Validate the filename from multipart upload
+                    validated_path = form.to_relpath(file.filename)
+                    if validated_path is None:
+                        raise storage.AccessError("Invalid filename")
+                    relative_file_path = validated_path
                 else:
-                    # Use the provided name, relative to its anchor
-                    # In other words, ignore the leading "/"
-                    relative_file_path = file_name.relative_to(file_name.anchor)
+                    relative_file_path = file_name
 
                 # Construct path inside the new revision directory
                 target_path = creating.interim_path / relative_file_path
