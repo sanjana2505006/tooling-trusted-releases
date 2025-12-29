@@ -90,7 +90,7 @@ async def report(session: web.Committer, project: str, version: str, file_path: 
     if task_status:
         return task_status
 
-    if task is None or (not isinstance(task.result, results.SBOMToolScore)):
+    if (task is None) or (not isinstance(task.result, results.SBOMToolScore)):
         raise base.ASFQuartException("Invalid SBOM score result", errorcode=500)
 
     task_result = task.result
@@ -160,7 +160,7 @@ async def _fetch_tasks(
             .order_by(sql.sqlmodel.desc(via(sql.Task.added)))
             .all()
         )
-        return tasks[0] if len(tasks) > 0 else None, augment_tasks, osv_tasks
+        return (tasks[0] if (len(tasks) > 0) else None), augment_tasks, osv_tasks
 
 
 def _outdated_tool_section(block: htm.Block, task_result: results.SBOMToolScore):
@@ -274,7 +274,7 @@ async def _report_task_results(block: htm.Block, task: sql.Task | None):
 
     task_status = task.status
     task_error = task.error
-    if task_status == sql.TaskStatus.QUEUED or task_status == sql.TaskStatus.ACTIVE:
+    if (task_status == sql.TaskStatus.QUEUED) or (task_status == sql.TaskStatus.ACTIVE):
         block.p["SBOM score is being computed."]
         return await template.blank("SBOM report", content=block.collect())
 
@@ -364,7 +364,7 @@ def _license_table(
                 if (len(components) == 0)
                 else htm.details[htm.summary[f"Category {category!s}"], htm.div[_detail_table(components)]]
             ],
-            htm.td[f"{count!s} {f'({new!s} new, {updated!s} changed)' if new or updated else ''}"],
+            htm.td[f"{count!s} {f'({new!s} new, {updated!s} changed)' if (new or updated) else ''}"],
         ]
         for category, count, new, updated, components in _license_tally(items, prev)
     ]
@@ -447,8 +447,8 @@ def _license_tally(
             (
                 category,
                 count,
-                new_count if old_issues is not None else None,
-                updated_count if old_issues is not None else None,
+                new_count if (old_issues is not None) else None,
+                updated_count if (old_issues is not None) else None,
                 components.get(category, []),
             )
             for category, count in counts.items()
@@ -500,7 +500,7 @@ def _vulnerability_component_details_osv(
         if previous_vulns is not None:
             if (
                 (vuln_id not in previous_vulns)
-                or previous_vulns[vuln_id][0] != vuln_severity
+                or (previous_vulns[vuln_id][0] != vuln_severity)
                 or (component.purl not in previous_vulns[vuln_id][1])
             ):
                 is_new = True
@@ -595,7 +595,7 @@ def _vulnerability_scan_results(
     previous_vulns = None
     if prev is not None:
         previous_osv = [
-            (_cdx_to_osv(v), [a.get("ref", "") for a in v.affects] if v.affects is not None else []) for v in prev
+            (_cdx_to_osv(v), [a.get("ref", "") for a in v.affects] if (v.affects is not None) else []) for v in prev
         ]
         previous_vulns = {v.id: (_extract_vulnerability_severity(v), a) for v, a in previous_osv}
     if task is not None:
