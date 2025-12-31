@@ -541,36 +541,36 @@ class Project(sqlmodel.SQLModel, table=True):
     @property
     def policy_announce_release_default(self) -> str:
         return """\
-The Apache [COMMITTEE] project team is pleased to announce the
-release of [PROJECT] [VERSION].
+The Apache {{COMMITTEE}} project team is pleased to announce the
+release of {{PROJECT}} {{VERSION}}.
 
 This is a stable release available for production use.
 
 Downloads are available from the following URL:
 
-[DOWNLOAD_URL]
+{{DOWNLOAD_URL}}
 
-On behalf of the Apache [COMMITTEE] project team,
+On behalf of the Apache {{COMMITTEE}} project team,
 
-[YOUR_FULL_NAME] ([YOUR_ASF_ID])
+{{YOUR_FULL_NAME}} ({{YOUR_ASF_ID}})
 """
 
     @property
     def policy_start_vote_default(self) -> str:
-        return """Hello [COMMITTEE],
+        return """Hello {{COMMITTEE}},
 
 I'd like to call a vote on releasing the following artifacts as
-Apache [PROJECT] [VERSION]. This vote is being conducted using an
+Apache {{PROJECT}} {{VERSION}}. This vote is being conducted using an
 Alpha version of the Apache Trusted Releases (ATR) platform.
 Please report any bugs or issues to the ASF Tooling team.
 
 The release candidate page, including downloads, can be found at:
 
-  [REVIEW_URL]
+  {{REVIEW_URL}}
 
 The release artifacts are signed with one or more OpenPGP keys from:
 
-  [KEYS_FILE]
+  {{KEYS_FILE}}
 
 Please review the release candidate and vote accordingly.
 
@@ -580,11 +580,11 @@ Please review the release candidate and vote accordingly.
 
 You can vote on ATR at the URL above, or manually by replying to this email.
 
-The vote ends after [DURATION] hours at [VOTE_ENDS_UTC].
+The vote ends after {{DURATION}} hours at {{VOTE_ENDS_UTC}}.
 
-[RELEASE_CHECKLIST]
+{{RELEASE_CHECKLIST}}
 Thanks,
-[YOUR_FULL_NAME] ([YOUR_ASF_ID])
+{{YOUR_FULL_NAME}} ({{YOUR_ASF_ID}})
 """
 
     @property

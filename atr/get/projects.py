@@ -597,13 +597,13 @@ def _textarea_with_variables(
     for name, description in template_variables:
         variable_rows.append(
             htm.tr[
-                htm.td(".font-monospace.text-nowrap.py-1")[f"[{name}]"],
+                htm.td(".font-monospace.text-nowrap.py-1")[f"{{{{{name}}}}}"],
                 htm.td(".py-1")[description],
                 htm.td(".text-end.py-1")[
                     htpy.button(
                         ".btn.btn-sm.btn-outline-secondary.copy-var-btn",
                         type="button",
-                        data_variable=f"[{name}]",
+                        data_variable=f"{{{{{name}}}}}",
                     )["Copy"]
                 ],
             ]

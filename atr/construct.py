@@ -99,14 +99,14 @@ async def announce_release_body(body: str, options: AnnounceReleaseOptions) -> s
     download_url = f"https://{host}{download_path}"
 
     # Perform substitutions in the body
-    body = body.replace("[COMMITTEE]", committee.display_name)
-    body = body.replace("[DOWNLOAD_URL]", download_url)
-    body = body.replace("[PROJECT]", options.project_name)
-    body = body.replace("[REVISION]", revision_number)
-    body = body.replace("[TAG]", revision_tag)
-    body = body.replace("[VERSION]", options.version_name)
-    body = body.replace("[YOUR_ASF_ID]", options.asfuid)
-    body = body.replace("[YOUR_FULL_NAME]", options.fullname)
+    body = body.replace("{{COMMITTEE}}", committee.display_name)
+    body = body.replace("{{DOWNLOAD_URL}}", download_url)
+    body = body.replace("{{PROJECT}}", options.project_name)
+    body = body.replace("{{REVISION}}", revision_number)
+    body = body.replace("{{TAG}}", revision_tag)
+    body = body.replace("{{VERSION}}", options.version_name)
+    body = body.replace("{{YOUR_ASF_ID}}", options.asfuid)
+    body = body.replace("{{YOUR_FULL_NAME}}", options.fullname)
 
     return body
 
@@ -143,12 +143,12 @@ def checklist_body(
     review_path = util.as_url(vote.selected, project_name=project.name, version_name=version_name)
     review_url = f"https://{host}{review_path}"
 
-    markdown = markdown.replace("[COMMITTEE]", committee.display_name)
-    markdown = markdown.replace("[PROJECT]", project.short_display_name)
-    markdown = markdown.replace("[REVIEW_URL]", review_url)
-    markdown = markdown.replace("[REVISION]", revision_number)
-    markdown = markdown.replace("[TAG]", revision_tag)
-    markdown = markdown.replace("[VERSION]", version_name)
+    markdown = markdown.replace("{{COMMITTEE}}", committee.display_name)
+    markdown = markdown.replace("{{PROJECT}}", project.short_display_name)
+    markdown = markdown.replace("{{REVIEW_URL}}", review_url)
+    markdown = markdown.replace("{{REVISION}}", revision_number)
+    markdown = markdown.replace("{{TAG}}", revision_tag)
+    markdown = markdown.replace("{{VERSION}}", version_name)
     return markdown
 
 
@@ -218,19 +218,19 @@ async def start_vote_body(body: str, options: StartVoteOptions) -> str:
 
     # Perform substitutions in the body
     # TODO: Handle the DURATION == 0 case
-    body = body.replace("[CHECKLIST_URL]", checklist_url)
-    body = body.replace("[COMMITTEE]", committee.display_name)
-    body = body.replace("[DURATION]", str(options.vote_duration))
-    body = body.replace("[KEYS_FILE]", keys_file or "[Sorry, the KEYS file is missing!]")
-    body = body.replace("[PROJECT]", project_short_display_name)
-    body = body.replace("[RELEASE_CHECKLIST]", checklist_content)
-    body = body.replace("[REVIEW_URL]", review_url)
-    body = body.replace("[REVISION]", revision_number)
-    body = body.replace("[TAG]", revision_tag)
-    body = body.replace("[VERSION]", options.version_name)
-    body = body.replace("[VOTE_ENDS_UTC]", options.vote_end)
-    body = body.replace("[YOUR_ASF_ID]", options.asfuid)
-    body = body.replace("[YOUR_FULL_NAME]", options.fullname)
+    body = body.replace("{{CHECKLIST_URL}}", checklist_url)
+    body = body.replace("{{COMMITTEE}}", committee.display_name)
+    body = body.replace("{{DURATION}}", str(options.vote_duration))
+    body = body.replace("{{KEYS_FILE}}", keys_file or "(Sorry, the KEYS file is missing!)")
+    body = body.replace("{{PROJECT}}", project_short_display_name)
+    body = body.replace("{{RELEASE_CHECKLIST}}", checklist_content)
+    body = body.replace("{{REVIEW_URL}}", review_url)
+    body = body.replace("{{REVISION}}", revision_number)
+    body = body.replace("{{TAG}}", revision_tag)
+    body = body.replace("{{VERSION}}", options.version_name)
+    body = body.replace("{{VOTE_ENDS_UTC}}", options.vote_end)
+    body = body.replace("{{YOUR_ASF_ID}}", options.asfuid)
+    body = body.replace("{{YOUR_FULL_NAME}}", options.fullname)
 
     return body
 

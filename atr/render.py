@@ -132,13 +132,13 @@ def _variables_tab(
     for name, description in template_variables:
         variable_rows.append(
             htm.tr[
-                htm.td(".font-monospace.text-nowrap")[f"[{name}]"],
+                htm.td(".font-monospace.text-nowrap")[f"{{{{{name}}}}}"],
                 htm.td[description],
                 htm.td(".text-end")[
                     htpy.button(
                         ".btn.btn-sm.btn-outline-secondary.copy-var-btn",
                         type="button",
-                        data_variable=f"[{name}]",
+                        data_variable=f"{{{{{name}}}}}",
                     )["Copy"]
                 ],
             ]
