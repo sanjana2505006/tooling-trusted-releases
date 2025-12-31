@@ -172,10 +172,10 @@ async def _add_files(
         )
 
 
-def _construct_svn_url(project_name: str, area: shared.upload.SvnArea, path: str, *, is_podling: bool) -> str:
+def _construct_svn_url(committee_name: str, area: shared.upload.SvnArea, path: str, *, is_podling: bool) -> str:
     if is_podling:
-        return f"{_SVN_BASE_URL}/{area.value}/incubator/{project_name}/{path}"
-    return f"{_SVN_BASE_URL}/{area.value}/{project_name}/{path}"
+        return f"{_SVN_BASE_URL}/{area.value}/incubator/{committee_name}/{path}"
+    return f"{_SVN_BASE_URL}/{area.value}/{committee_name}/{path}"
 
 
 def _json_error(message: str, status: int) -> web.WerkzeugResponse:
@@ -197,9 +197,10 @@ async def _svn_import(
         async with db.session() as data:
             release = await session.release(project_name, version_name, data=data)
             is_podling = (release.project.committee is not None) and release.project.committee.is_podling
+            committee_name = release.project.committee_name or project_name
 
         svn_url = _construct_svn_url(
-            project_name,
+            committee_name,
             svn_area,  # pyright: ignore[reportArgumentType]
             svn_path,
             is_podling=is_podling,
