@@ -146,7 +146,7 @@ async def add(session: web.Committer, add_openpgp_key_form: shared.keys.AddOpenP
     return await session.redirect(get.keys.keys)
 ```
 
-The [`form.validate`](/ref/atr/form.py:validate) function should only be called manually when the request comes from JavaScript, as in [`announce_preview`](/ref/atr/post/preview.py:announce_preview). It takes the form class, the form data dictionary, and an optional context dictionary. If validation succeeds, it returns an instance of your form class with validated data. If validation fails, it raises a `pydantic.ValidationError`.
+The [`form.validate`](/ref/atr/form.py:validate) function should only be called manually when the request comes from JavaScript, as in [`body_preview`](/ref/atr/post/voting.py:body_preview). It takes the form class, the form data dictionary, and an optional context dictionary. If validation succeeds, it returns an instance of your form class with validated data. If validation fails, it raises a `pydantic.ValidationError`.
 
 The error handling uses [`form.flash_error_data`](/ref/atr/form.py:flash_error_data) to prepare error information for display, and [`form.flash_error_summary`](/ref/atr/form.py:flash_error_summary) to create a user-friendly summary of all validation errors.
 
