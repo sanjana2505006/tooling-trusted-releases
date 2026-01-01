@@ -27,6 +27,7 @@ import aiofiles.os
 import aioshutil
 import sqlmodel
 
+import atr.construct as construct
 import atr.db as db
 import atr.models.sql as sql
 import atr.storage as storage
@@ -99,13 +100,13 @@ class CommitteeMember(CommitteeParticipant):
         self.__asf_uid = asf_uid
         self.__committee_name = committee_name
 
-    async def release(
+    async def release(  # noqa: C901
         self,
         project_name: str,
         version_name: str,
         preview_revision_number: str,
         recipient: str,
-        subject: str,
+        subject_template_hash: str | None,
         body: str,
         download_path_suffix: str,
         asf_uid: str,
@@ -131,6 +132,23 @@ class CommitteeMember(CommitteeParticipant):
         )
         if (committee := release.project.committee) is None:
             raise storage.AccessError("Release has no committee")
+
+        # Fetch the current subject template and verify the hash
+        subject_template = await construct.announce_release_subject_default(project_name)
+        if subject_template_hash is not None:
+            current_hash = construct.template_hash(subject_template)
+            if current_hash != subject_template_hash:
+                raise storage.AccessError("Subject template has been modified since the form was loaded")
+
+        # Substitute the subject template
+        options = construct.AnnounceReleaseOptions(
+            asfuid=asf_uid,
+            fullname=fullname,
+            project_name=project_name,
+            version_name=version_name,
+            revision_number=preview_revision_number,
+        )
+        subject, _ = await construct.announce_release_subject_and_body(subject_template, "", options)
 
         # Prepare paths for file operations
         unfinished_revisions_path = util.release_directory_base(release)

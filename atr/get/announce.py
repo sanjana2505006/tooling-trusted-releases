@@ -55,6 +55,7 @@ async def selected(session: web.Committer, project_name: str, version_name: str)
     # Get the templates from the release policy
     default_subject_template = await construct.announce_release_subject_default(project_name)
     default_body_template = await construct.announce_release_default(project_name)
+    subject_template_hash = construct.template_hash(default_subject_template)
 
     # Expand the templates
     options = construct.AnnounceReleaseOptions(
@@ -89,6 +90,7 @@ async def selected(session: web.Committer, project_name: str, version_name: str)
         release=release,
         mailing_list_choices=mailing_list_choices,
         default_subject=default_subject,
+        subject_template_hash=subject_template_hash,
         default_body=default_body,
         default_download_path_suffix=default_download_path_suffix,
         download_path_description=f"The URL will be {description_download_prefix} plus this suffix",
@@ -177,6 +179,7 @@ async def _render_page(
     release: sql.Release,
     mailing_list_choices: list[tuple[str, str]],
     default_subject: str,
+    subject_template_hash: str,
     default_body: str,
     default_download_path_suffix: str,
     download_path_description: str,
@@ -208,6 +211,7 @@ async def _render_page(
     page.h2["Announce this release"]
     page.p[f"This form will send an announcement to the ASF {util.USER_TESTS_ADDRESS} mailing list."]
 
+    custom_subject_widget = _render_subject_field(default_subject, release.project.name)
     custom_body_widget = _render_body_field(default_body, release.project.name)
     custom_mailing_list_widget = _render_mailing_list_with_warning(mailing_list_choices, util.USER_TESTS_ADDRESS)
 
@@ -216,7 +220,7 @@ async def _render_page(
 
     defaults_dict = {
         "revision_number": release.unwrap_revision_number,
-        "subject": default_subject,
+        "subject_template_hash": subject_template_hash,
         "body": default_body,
     }
 
@@ -227,6 +231,7 @@ async def _render_page(
         submit_label="Send announcement email",
         defaults=defaults_dict,
         custom={
+            "subject": custom_subject_widget,
             "body": custom_body_widget,
             "mailing_list": custom_mailing_list_widget,
             "download_path_suffix": download_path_widget,
@@ -251,3 +256,23 @@ def _render_release_card(release: sql.Release) -> htm.Element:
         ],
     ]
     return card
+
+
+def _render_subject_field(default_subject: str, project_name: str) -> htm.Element:
+    settings_url = util.as_url(projects.view, name=project_name) + "#announce_release_subject"
+    return htm.div[
+        htpy.input(
+            type="text",
+            name="subject",
+            id="subject",
+            value=default_subject,
+            readonly=True,
+            **{"class": "form-control bg-light"},
+        ),
+        htm.div(".form-text.text-muted.mt-2")[
+            "The subject is computed from the template when the email is sent. ",
+            "To edit the template, go to the ",
+            htm.a(href=settings_url)["project settings"],
+            ".",
+        ],
+    ]

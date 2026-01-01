@@ -24,6 +24,7 @@ import atr.construct as construct
 import atr.db as db
 import atr.db.interaction as interaction
 import atr.log as log
+import atr.models.results as results
 import atr.models.sql as sql
 import atr.storage as storage
 import atr.tasks.message as message
@@ -90,7 +91,12 @@ class CommitteeParticipant(FoundationCommitter):
             return "", "No vote thread found."
 
         # Construct the reply email
-        original_subject = latest_vote_task.task_args["subject"]
+        vote_result = latest_vote_task.result
+        if vote_result is None:
+            return "", "Vote task has not completed yet."
+        if not isinstance(vote_result, results.VoteInitiate):
+            return "", "Vote task result is not a VoteInitiate result."
+        original_subject = vote_result.subject
 
         # Arguments for the task to cast a vote
         email_recipient = latest_vote_task.task_args["email_to"]
@@ -131,7 +137,7 @@ class CommitteeParticipant(FoundationCommitter):
         version_name: str,
         selected_revision_number: str,
         vote_duration_choice: int,
-        subject_data: str,
+        subject: str,
         body_data: str,
         asf_uid: str,
         asf_fullname: str,
@@ -178,7 +184,7 @@ class CommitteeParticipant(FoundationCommitter):
                 vote_duration=vote_duration_choice,
                 initiator_id=asf_uid,
                 initiator_fullname=asf_fullname,
-                subject=subject_data,
+                subject=subject,
                 body=body_data,
             ).model_dump(),
             asf_uid=asf_uid,
@@ -343,7 +349,7 @@ class CommitteeMember(CommitteeParticipant):
                 asf_uid=self.__asf_uid,
                 asf_fullname=asf_fullname,
                 vote_duration_choice=vote_duration,
-                subject_data=subject_data,
+                subject=subject_data,
                 body_data=body_data,
                 release=release,
                 promote=False,

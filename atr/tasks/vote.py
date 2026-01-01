@@ -100,7 +100,7 @@ async def _initiate_core_logic(args: Initiate) -> results.Results | None:
         log.error(error_msg)
         raise VoteInitiationError(error_msg)
 
-    # The body has already been substituted by the route handler
+    # The subject and body have already been substituted by the route handler
     subject = args.subject
     body = args.body
 

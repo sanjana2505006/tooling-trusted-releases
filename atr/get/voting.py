@@ -66,6 +66,7 @@ async def selected_revision(
 
         default_subject_template = await construct.start_vote_subject_default(project_name)
         default_body_template = await construct.start_vote_default(project_name)
+        subject_template_hash = construct.template_hash(default_subject_template)
 
         options = construct.StartVoteOptions(
             asfuid=session.uid,
@@ -86,6 +87,7 @@ async def selected_revision(
             revision_number=revision,
             permitted_recipients=permitted_recipients,
             default_subject=default_subject,
+            subject_template_hash=subject_template_hash,
             default_body=default_body,
             min_hours=min_hours,
             keys_warning=keys_warning,
@@ -130,6 +132,7 @@ async def _render_page(
     revision_number: str,
     permitted_recipients: list[str],
     default_subject: str,
+    subject_template_hash: str,
     default_body: str,
     min_hours: int,
     keys_warning: bool,
@@ -177,6 +180,7 @@ async def _render_page(
         version_name=release.version,
     )
 
+    custom_subject_widget = _render_subject_field(default_subject, release.project.name)
     custom_body_widget = _render_body_field(default_body, release.project.name)
 
     vote_form = form.render(
@@ -186,10 +190,11 @@ async def _render_page(
         defaults={
             "mailing_list": permitted_recipients,
             "vote_duration": min_hours,
-            "subject": default_subject,
+            "subject_template_hash": subject_template_hash,
             "body": default_body,
         },
         custom={
+            "subject": custom_subject_widget,
             "body": custom_body_widget,
         },
     )
@@ -204,3 +209,23 @@ async def _render_page(
     page.append(htpy.div("#vote-body-config.d-none", data_preview_url=preview_url))
 
     return page.collect()
+
+
+def _render_subject_field(default_subject: str, project_name: str) -> htm.Element:
+    settings_url = util.as_url(projects.view, name=project_name) + "#start_vote_subject"
+    return htm.div[
+        htpy.input(
+            type="text",
+            name="subject",
+            id="subject",
+            value=default_subject,
+            readonly=True,
+            **{"class": "form-control bg-light"},
+        ),
+        htm.div(".form-text.text-muted.mt-2")[
+            "The subject is computed from the template when the email is sent. ",
+            "To edit the template, go to the ",
+            htm.a(href=settings_url)["project settings"],
+            ".",
+        ],
+    ]

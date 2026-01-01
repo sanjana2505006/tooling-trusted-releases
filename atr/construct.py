@@ -16,6 +16,8 @@
 # under the License.
 
 import dataclasses
+import datetime
+import hashlib
 from typing import Literal
 
 import aiofiles.os
@@ -40,6 +42,7 @@ TEMPLATE_VARIABLES: list[tuple[str, str, set[Context]]] = [
     ("REVISION", "Revision number", {"announce", "checklist", "vote", "vote_subject"}),
     ("TAG", "Revision tag, if set", {"announce", "checklist", "vote", "vote_subject"}),
     ("VERSION", "Version name", {"announce", "announce_subject", "checklist", "vote", "vote_subject"}),
+    ("VOTE_ENDS_UTC", "Vote end date and time in UTC", {"vote_subject"}),
     ("YOUR_ASF_ID", "Your Apache UID", {"announce", "vote"}),
     ("YOUR_FULL_NAME", "Your full name", {"announce", "vote"}),
 ]
@@ -217,6 +220,8 @@ async def start_vote_subject_and_body(subject: str, body: str, options: StartVot
     review_path = util.as_url(vote.selected, project_name=options.project_name, version_name=options.version_name)
     review_url = f"https://{host}{review_path}"
     project_display_name = release.project.short_display_name if release.project else options.project_name
+    vote_end = datetime.datetime.now(datetime.UTC) + datetime.timedelta(hours=options.vote_duration)
+    vote_end_str = f"{vote_end.day} {vote_end.strftime('%b %H:%M')} UTC"
 
     # NOTE: The /downloads/ directory is served by the proxy front end, not by ATR
     # Therefore there is no route handler, so we have to construct the URL manually
@@ -251,6 +256,7 @@ async def start_vote_subject_and_body(subject: str, body: str, options: StartVot
     subject = subject.replace("{{REVISION}}", revision_number)
     subject = subject.replace("{{TAG}}", revision_tag)
     subject = subject.replace("{{VERSION}}", options.version_name)
+    subject = subject.replace("{{VOTE_ENDS_UTC}}", vote_end_str)
 
     # Perform substitutions in the body
     # TODO: Handle the DURATION == 0 case
@@ -277,6 +283,11 @@ async def start_vote_subject_default(project_name: str) -> str:
         )
 
     return project.policy_start_vote_subject
+
+
+def template_hash(template: str) -> str:
+    """Compute a hash of a template for verification."""
+    return hashlib.sha256(template.encode()).hexdigest()
 
 
 def vote_subject_template_variables() -> list[tuple[str, str]]:

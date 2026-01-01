@@ -30,7 +30,8 @@ class AnnounceForm(form.Form):
         "Send vote email to",
         widget=form.Widget.CUSTOM,
     )
-    subject: str = form.label("Subject")
+    subject: str = form.label("Subject", widget=form.Widget.CUSTOM)
+    subject_template_hash: str = form.label("Subject template hash", widget=form.Widget.HIDDEN)
     body: str = form.label("Body", widget=form.Widget.CUSTOM)
     download_path_suffix: str = form.label("Download path suffix", widget=form.Widget.CUSTOM)
     confirm_announce: Literal["CONFIRM"] = form.label(

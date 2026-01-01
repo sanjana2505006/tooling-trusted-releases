@@ -32,5 +32,6 @@ class StartVotingForm(form.Form):
         "Minimum number of hours the vote will be open for.",
         default=72,
     )
-    subject: str = form.label("Subject")
+    subject: str = form.label("Subject", widget=form.Widget.CUSTOM)
+    subject_template_hash: str = form.label("Subject template hash", widget=form.Widget.HIDDEN)
     body: str = form.label("Body", widget=form.Widget.CUSTOM)

@@ -34,6 +34,33 @@ class BodyPreviewForm(form.Form):
     vote_duration: form.Int = form.label("Vote duration")
 
 
+@post.committer("/voting/body/preview/<project_name>/<version_name>/<revision_number>")
+@post.form(BodyPreviewForm)
+async def body_preview(
+    session: web.Committer,
+    preview_form: BodyPreviewForm,
+    project_name: str,
+    version_name: str,
+    revision_number: str,
+) -> web.QuartResponse:
+    await session.check_access(project_name)
+
+    default_subject_template = await construct.start_vote_subject_default(project_name)
+    default_body_template = await construct.start_vote_default(project_name)
+
+    options = construct.StartVoteOptions(
+        asfuid=session.uid,
+        fullname=session.fullname,
+        project_name=project_name,
+        version_name=version_name,
+        revision_number=revision_number,
+        vote_duration=preview_form.vote_duration,
+    )
+    _, body = await construct.start_vote_subject_and_body(default_subject_template, default_body_template, options)
+
+    return web.TextResponse(body)
+
+
 @post.committer("/voting/<project_name>/<version_name>/<revision>")
 @post.form(shared.voting.StartVotingForm)
 async def selected_revision(
@@ -67,6 +94,25 @@ async def selected_revision(
                 f"Invalid mailing list selection: {start_voting_form.mailing_list}",
             )
 
+        subject_template = await construct.start_vote_subject_default(project_name)
+        current_hash = construct.template_hash(subject_template)
+        if current_hash != start_voting_form.subject_template_hash:
+            return await session.form_error(
+                "subject_template_hash",
+                "The subject template has been modified since you loaded the form. Please reload and try again.",
+            )
+
+        # Substitute the subject template (must be done here, not in task, as it requires app context)
+        options = construct.StartVoteOptions(
+            asfuid=session.uid,
+            fullname=session.fullname,
+            project_name=project_name,
+            version_name=version_name,
+            revision_number=revision,
+            vote_duration=start_voting_form.vote_duration,
+        )
+        subject, _ = await construct.start_vote_subject_and_body(subject_template, "", options)
+
         async with storage.write_as_committee_participant(committee.name) as wacp:
             _task = await wacp.vote.start(
                 start_voting_form.mailing_list,
@@ -74,7 +120,7 @@ async def selected_revision(
                 version_name,
                 revision,
                 start_voting_form.vote_duration,
-                start_voting_form.subject,
+                subject,
                 start_voting_form.body,
                 session.uid,
                 session.fullname,
@@ -90,30 +136,3 @@ async def selected_revision(
             project_name=project_name,
             version_name=version_name,
         )
-
-
-@post.committer("/voting/body/preview/<project_name>/<version_name>/<revision_number>")
-@post.form(BodyPreviewForm)
-async def body_preview(
-    session: web.Committer,
-    preview_form: BodyPreviewForm,
-    project_name: str,
-    version_name: str,
-    revision_number: str,
-) -> web.QuartResponse:
-    await session.check_access(project_name)
-
-    default_subject_template = await construct.start_vote_subject_default(project_name)
-    default_body_template = await construct.start_vote_default(project_name)
-
-    options = construct.StartVoteOptions(
-        asfuid=session.uid,
-        fullname=session.fullname,
-        project_name=project_name,
-        version_name=version_name,
-        revision_number=revision_number,
-        vote_duration=preview_form.vote_duration,
-    )
-    _, body = await construct.start_vote_subject_and_body(default_subject_template, default_body_template, options)
-
-    return web.TextResponse(body)

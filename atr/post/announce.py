@@ -19,6 +19,7 @@ from __future__ import annotations
 
 # TODO: Improve upon the routes_release pattern
 import atr.blueprints.post as post
+import atr.construct as construct
 import atr.get as get
 import atr.models.sql as sql
 import atr.shared as shared
@@ -60,6 +61,15 @@ async def selected(
             version_name=version_name,
         )
 
+    # Validate that the subject template hasn't changed
+    subject_template = await construct.announce_release_subject_default(project_name)
+    current_hash = construct.template_hash(subject_template)
+    if current_hash != announce_form.subject_template_hash:
+        return await session.form_error(
+            "subject_template_hash",
+            "The subject template has been modified since you loaded the form. Please reload and try again.",
+        )
+
     try:
         async with storage.write_as_project_committee_member(project_name, session) as wacm:
             await wacm.announce.release(
@@ -67,7 +77,7 @@ async def selected(
                 version_name,
                 preview_revision_number,
                 announce_form.mailing_list,
-                announce_form.subject,
+                announce_form.subject_template_hash,
                 announce_form.body,
                 announce_form.download_path_suffix,
                 session.uid,
