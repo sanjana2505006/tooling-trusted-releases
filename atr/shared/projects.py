@@ -112,8 +112,8 @@ class ComposePolicyForm(form.Form):
         widget=form.Widget.TEXTAREA,
     )
     license_check_mode: form.Enum[sql.LicenseCheckMode] = form.label(
-        "License check mode",
-        "Choose which license checks to run on source artifacts. Lightweight checks always run on binary artifacts.",
+        "Source artifact license checker",
+        "Only affects source artifacts. Lightweight checks ALWAYS RUN on binary artifacts.",
         widget=form.Widget.RADIO,
     )
     binary_artifact_paths: str = form.label(
