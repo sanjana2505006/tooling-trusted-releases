@@ -6,6 +6,10 @@
 
 **Next**: `3.` [Developer guide](developer-guide)
 
+**Pages**:
+
+* `2.1.` [Signing artifacts](signing-artifacts)
+
 **Sections**:
 
 * [Introduction](#introduction)

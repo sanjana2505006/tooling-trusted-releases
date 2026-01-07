@@ -12,6 +12,8 @@
 * [HTML](#html)
 * [Markdown](#markdown)
 * [JavaScript](#javascript)
+* [Shell](#shell)
+* [OCI container files ("dockerfiles")](#oci-container-files-dockerfiles)
 
 ## Python code
 
