@@ -40,4 +40,52 @@ function initAnnounceConfirm() {
 	updateButtonState();
 }
 
-document.addEventListener("DOMContentLoaded", initAnnounceConfirm);
+function initDownloadPathValidation() {
+	const pathInput = document.getElementById("download_path_suffix");
+	const pathHelpText = pathInput
+		? pathInput.parentElement.querySelector(".form-text")
+		: null;
+
+	if (!pathInput || !pathHelpText) {
+		return;
+	}
+
+	const baseText = pathHelpText.dataset.baseText || "";
+	let pathDebounce;
+
+	const updatePathHelpText = () => {
+		let suffix = pathInput.value;
+		if (suffix.includes("..") || suffix.includes("//")) {
+			pathHelpText.textContent =
+				"Download path suffix must not contain .. or //";
+			return;
+		}
+		if (suffix.startsWith("./")) {
+			suffix = suffix.slice(1);
+		} else if (suffix === ".") {
+			suffix = "/";
+		}
+		if (!suffix.startsWith("/")) {
+			suffix = `/${suffix}`;
+		}
+		if (!suffix.endsWith("/")) {
+			suffix = `${suffix}/`;
+		}
+		if (suffix.includes("/.")) {
+			pathHelpText.textContent = "Download path suffix must not contain /.";
+			return;
+		}
+		pathHelpText.textContent = baseText + suffix;
+	};
+
+	pathInput.addEventListener("input", () => {
+		clearTimeout(pathDebounce);
+		pathDebounce = setTimeout(updatePathHelpText, 10);
+	});
+	updatePathHelpText();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+	initAnnounceConfirm();
+	initDownloadPathValidation();
+});
