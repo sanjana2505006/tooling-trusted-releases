@@ -130,7 +130,7 @@ COPY --from=builder /opt/atr/start-atr.sh .
 RUN chmod +x ./start-atr.sh
 RUN java -version
 
-EXPOSE 4443
+EXPOSE 8080
 
 WORKDIR /opt/atr
 
