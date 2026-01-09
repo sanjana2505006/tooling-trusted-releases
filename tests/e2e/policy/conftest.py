@@ -20,7 +20,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import e2e.helpers as helpers
-import e2e.sbom.helpers as sbom_helpers
+import e2e.policy.helpers as policy_helpers
 import pytest
 
 if TYPE_CHECKING:
@@ -30,20 +30,17 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def page_release_with_file(page: Page) -> Generator[Page]:
+def page_project(page: Page) -> Generator[Page]:
     helpers.log_in(page)
-
-    helpers.delete_release_if_exists(page, sbom_helpers.PROJECT_NAME, sbom_helpers.VERSION_NAME)
-
-    helpers.visit(page, f"/start/{sbom_helpers.PROJECT_NAME}")
-    page.get_by_role("textbox").type(sbom_helpers.VERSION_NAME)
-    page.get_by_role("button", name="Start new release").click()
-    helpers.visit(page, f"/upload/{sbom_helpers.PROJECT_NAME}/{sbom_helpers.VERSION_NAME}")
-    page.locator('input[name="file_data"]').set_input_files(
-        f"{sbom_helpers.CURRENT_DIR}/../test_files/{sbom_helpers.FILE_NAME}"
-    )
-    page.get_by_role("button", name="Add files").click()
-    page.wait_for_url(f"**/compose/{sbom_helpers.PROJECT_NAME}/{sbom_helpers.VERSION_NAME}")
-    helpers.visit(page, f"/compose/{sbom_helpers.PROJECT_NAME}/{sbom_helpers.VERSION_NAME}")
-    page.wait_for_selector("#ongoing-tasks-banner", state="hidden")
+    _clear_policy_excludes(page)
+    helpers.visit(page, policy_helpers.PROJECT_URL)
     yield page
+    _clear_policy_excludes(page)
+
+
+def _clear_policy_excludes(page: Page) -> None:
+    helpers.visit(page, policy_helpers.PROJECT_URL)
+    policy_helpers.textarea_source_excludes_lightweight(page).fill("")
+    policy_helpers.textarea_source_excludes_rat(page).fill("")
+    policy_helpers.compose_form_save_button(page).click()
+    page.wait_for_load_state()
