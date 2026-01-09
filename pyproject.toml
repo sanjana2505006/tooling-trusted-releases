@@ -111,6 +111,9 @@ minversion = "8.0"
 testpaths  = ["tests"]
 asyncio_mode = "auto"
 addopts = "--ignore=tests/e2e"
+filterwarnings = [
+  "ignore:imghdr was removed in Python 3.13:DeprecationWarning:pgpy.constants",
+]
 
 [tool.ruff]
 line-length = 120

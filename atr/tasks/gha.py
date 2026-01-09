@@ -97,7 +97,7 @@ async def _find_triggered_run(
 
     def get_run(resp: dict[str, Any]) -> dict[str, Any] | None:
         return next(
-            (r for r in resp["workflow_runs"] if r["head_branch"] == args.ref and r["name"] == unique_id),
+            (r for r in resp["workflow_runs"] if (r["head_branch"] == args.ref) and (r["name"] == unique_id)),
             None,
         )
 
