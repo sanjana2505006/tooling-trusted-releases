@@ -1,5 +1,5 @@
-.PHONY: build build-alpine build-bootstrap build-playwright build-ts \
-  bump-bootstrap certs check check-extra check-light commit \
+.PHONY: build build-alpine build-bootstrap build-docs build-playwright \
+  build-ts bump-bootstrap certs check check-extra check-light commit \
   docs generate-version ipython manual run-alpine run-playwright \
   run-playwright-slow serve serve-local sync sync-all update-deps
 
@@ -17,6 +17,13 @@ build-bootstrap:
 	  -v "$$PWD/bootstrap/source:/opt/bootstrap/source" \
 	  -v "$$PWD/atr/static:/run/bootstrap-output" \
 	  atr-bootstrap
+
+build-docs:
+	mkdir -p docs
+	rm -f docs/*.html
+	uv run --frozen python3 scripts/docs_build.py
+	for fn in atr/docs/*.md; do out=$${fn#atr/}; cmark "$$fn" > "$${out%.md}.html"; done
+	uv run --frozen python3 scripts/docs_post_process.py docs/*.html
 
 build-playwright:
 	docker build -t atr-playwright -f tests/Dockerfile.playwright playwright
