@@ -48,6 +48,7 @@ class DistributionWorkflow(schema.Strict):
     staging: bool = schema.description("Whether this is a staging distribution")
     project_name: str = schema.description("Project name in ATR")
     version_name: str = schema.description("Version name in ATR")
+    phase: str = schema.description("Release phase in ATR")
     asf_uid: str = schema.description("ASF UID of the user triggering the workflow")
     committee_name: str = schema.description("Committee name in ATR")
     platform: str = schema.description("Distribution platform")
@@ -67,7 +68,9 @@ async def trigger_workflow(args: DistributionWorkflow, *, task_id: int | None = 
         "ref": "main",
         "inputs": {
             "atr-id": unique_id,
+            "asf-uid": args.asf_uid,
             "project": args.project_name,
+            "phase": args.phase,
             "version": args.version_name,
             "distribution-owner-namespace": args.namespace,
             "distribution-package": args.package,

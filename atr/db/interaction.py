@@ -397,14 +397,18 @@ async def trusted_jwt(publisher: str, jwt: str, phase: TrustedProjectPhase) -> t
     return payload, asf_uid, project
 
 
-async def trusted_jwt_for_version(
-    publisher: str, jwt: str, phase: TrustedProjectPhase, version_name: str
-) -> tuple[dict[str, Any], str, sql.Project]:
-    payload, asf_uid, project = await trusted_jwt(publisher, jwt, phase)
+async def trusted_jwt_for_dist(
+    publisher: str, jwt: str, asf_uid: str, phase: TrustedProjectPhase, project_name: str, version_name: str
+) -> tuple[dict[str, Any], str, sql.Project, sql.Release]:
+    payload, _asf_uid = await validate_trusted_jwt(publisher, jwt)
+    # payload, asf_uid, project = await trusted_jwt(publisher, jwt, phase)
     async with db.session() as db_data:
-        release = await db_data.release(project_name=project.name, version=version_name).get()
+        project = await db_data.project(name=project_name, _committee=True).demand(
+            InteractionError(f"Project {project_name} does not exist")
+        )
+        release = await db_data.release(project_name=project_name, version=version_name).get()
         if not release:
-            raise InteractionError(f"Release {version_name} does not exist in project {project.name}")
+            raise InteractionError(f"Release {version_name} does not exist in project {project_name}")
         if (phase == TrustedProjectPhase.COMPOSE) and (release.phase != sql.ReleasePhase.RELEASE_CANDIDATE_DRAFT):
             raise InteractionError(f"Release {version_name} is not in compose phase")
         if (phase == TrustedProjectPhase.VOTE) and (release.phase != sql.ReleasePhase.RELEASE_CANDIDATE):
@@ -412,7 +416,7 @@ async def trusted_jwt_for_version(
         if (phase == TrustedProjectPhase.FINISH) and (release.phase != sql.ReleasePhase.RELEASE_PREVIEW):
             raise InteractionError(f"Release {version_name} is not in finish phase")
 
-    return payload, asf_uid, project
+    return payload, asf_uid, project, release
 
 
 async def unfinished_releases(asfuid: str) -> list[tuple[str, str, list[sql.Release]]]:

@@ -256,23 +256,28 @@ async def committees_list() -> DictResponse:
 async def distribute_ssh_register(data: models.api.DistributeSshRegisterArgs) -> DictResponse:
     """
     Register an SSH key sent with a corroborating Trusted Publisher JWT,
-    validating the requested version is in the correct phase.
+    validating the requested release is in the correct phase.
     """
-    payload, asf_uid, project = await interaction.trusted_jwt_for_version(
-        data.publisher, data.jwt, interaction.TrustedProjectPhase(data.phase), data.version
+    payload, asf_uid, project, release = await interaction.trusted_jwt_for_dist(
+        data.publisher,
+        data.jwt,
+        data.asf_uid,
+        interaction.TrustedProjectPhase(data.phase),
+        data.project_name,
+        data.version,
     )
     async with storage.write_as_committee_member(util.unwrap(project.committee).name, asf_uid) as wacm:
         fingerprint, expires = await wacm.ssh.add_workflow_key(
             payload["actor"],
             payload["actor_id"],
-            project.name,
+            release.project_name,
             data.ssh_key,
         )
 
     return models.api.DistributeSshRegisterResults(
         endpoint="/distribute/ssh/register",
         fingerprint=fingerprint,
-        project=project.name,
+        project=release.project_name,
         expires=expires,
     ).model_dump(), 200
 

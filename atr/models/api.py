@@ -72,6 +72,8 @@ class DistributeSshRegisterArgs(schema.Strict):
     jwt: str = schema.example("eyJhbGciOiJIUzI1[...]mMjLiuyu5CSpyHI=")
     ssh_key: str = schema.example("ssh-ed25519 AAAAC3NzaC1lZDI1NTEgH5C9okWi0dh25AAAAIOMqqnkVzrm0SdG6UOoqKLsabl9GKJl")
     phase: str = schema.Field(strict=False, default="compose", json_schema_extra={"examples": ["compose", "finish"]})
+    asf_uid: str = schema.example("user")
+    project_name: str = schema.example("tooling")
     version: str = schema.example("0.0.1")
 
 

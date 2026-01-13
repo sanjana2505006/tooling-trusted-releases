@@ -21,8 +21,10 @@ from typing import Final
 
 import atr.blueprints.post as post
 import atr.db as db
+import atr.db.interaction as interaction
 import atr.get as get
 import atr.models.distribution as distribution
+import atr.models.sql as sql
 import atr.shared as shared
 import atr.storage as storage
 import atr.web as web
@@ -63,7 +65,14 @@ async def automate_form_process_page(
     release, committee = await shared.distribution.release_validated_and_committee(
         project, version, staging=staging, release_policy=True
     )
-
+    phase = interaction.TrustedProjectPhase.COMPOSE
+    match release.phase:
+        case sql.ReleasePhase.RELEASE_PREVIEW:
+            phase = interaction.TrustedProjectPhase.FINISH
+        case sql.ReleasePhase.RELEASE_CANDIDATE:
+            phase = interaction.TrustedProjectPhase.VOTE
+        case sql.ReleasePhase.RELEASE_CANDIDATE_DRAFT:
+            phase = interaction.TrustedProjectPhase.COMPOSE
     async with storage.write_as_committee_member(committee_name=committee.name) as w:
         try:
             await w.distributions.automate(
@@ -73,6 +82,7 @@ async def automate_form_process_page(
                 dd.owner_namespace,
                 project,
                 version,
+                phase.value,
                 release.latest_revision_number,
                 dd.package,
                 dd.version,
