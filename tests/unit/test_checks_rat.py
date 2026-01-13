@@ -33,6 +33,16 @@ def rat_available() -> tuple[bool, bool]:
     return (java_ok, jar_ok)
 
 
+def test_check_includes_command(rat_available: tuple[bool, bool]):
+    _skip_if_unavailable(rat_available)
+    result = rat._synchronous(str(TEST_ARCHIVE), [])
+    assert len(result.command) > 0
+    assert "java" in result.command
+    assert "-jar" in result.command
+    assert "--" in result.command
+    assert "." in result.command
+
+
 def test_check_includes_excludes_source_none(rat_available: tuple[bool, bool]):
     _skip_if_unavailable(rat_available)
     result = rat._synchronous(str(TEST_ARCHIVE), [])

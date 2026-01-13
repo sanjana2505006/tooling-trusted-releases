@@ -185,31 +185,12 @@ async def _check_core(
 
 
 def _check_core_logic_execute_rat(
-    rat_jar_path: str,
+    command: list[str],
     scan_root: str,
     temp_dir: str,
-    excludes_file_path: str | None,
-    apply_extended_std: bool,
+    xml_output_path: str,
 ) -> tuple[checkdata.Rat | None, str | None]:
     """Execute Apache RAT and process its output."""
-    xml_output_path = os.path.join(temp_dir, _RAT_REPORT_FILENAME)
-    log.info(f"XML output will be written to: {xml_output_path}")
-
-    # Convert exclusion file path from temp_dir relative to scan_root relative
-    excludes_file: str | None = None
-    if excludes_file_path is not None:
-        abs_path = os.path.join(temp_dir, excludes_file_path)
-        if not (os.path.exists(abs_path) and os.path.isfile(abs_path)):
-            log.error(f"Exclusion file not found or not a regular file: {abs_path}")
-            return checkdata.Rat(
-                message=f"Exclusion file is not a regular file: {excludes_file_path}",
-                errors=[f"Expected exclusion file but found: {abs_path}"],
-            ), None
-        excludes_file = os.path.relpath(abs_path, scan_root)
-        log.info(f"Using exclusion file: {excludes_file}")
-    command = _build_rat_command(rat_jar_path, xml_output_path, excludes_file, apply_extended_std)
-    log.info(f"Running Apache RAT: {' '.join(command)}")
-
     # Change working directory to scan_root when running the process
     current_dir = os.getcwd()
     os.chdir(scan_root)
@@ -301,6 +282,26 @@ def _count_files_outside_directory(temp_dir: str, scan_root: str) -> int:
         count += len(files)
 
     return count
+
+
+def _get_command_and_xml_output_path(
+    temp_dir: str, excludes_file_path: str | None, apply_extended_std: bool, scan_root: str, rat_jar_path: str
+) -> tuple[list[str], str]:
+    xml_output_path = os.path.join(temp_dir, _RAT_REPORT_FILENAME)
+    log.info(f"XML output will be written to: {xml_output_path}")
+
+    # Convert exclusion file path from temp_dir relative to scan_root relative
+    excludes_file: str | None = None
+    if excludes_file_path is not None:
+        abs_path = os.path.join(temp_dir, excludes_file_path)
+        if not (os.path.exists(abs_path) and os.path.isfile(abs_path)):
+            log.error(f"Exclusion file not found or not a regular file: {abs_path}")
+            raise RatError(f"Exclusion file is not a regular file: {excludes_file_path}({abs_path})")
+        excludes_file = os.path.relpath(abs_path, scan_root)
+        log.info(f"Using exclusion file: {excludes_file}")
+    command = _build_rat_command(rat_jar_path, xml_output_path, excludes_file, apply_extended_std)
+    log.info(f"Running Apache RAT: {' '.join(command)}")
+    return command, xml_output_path
 
 
 def _is_inside_directory(path: str, directory: str) -> bool:
@@ -490,12 +491,17 @@ def _synchronous_extract(
     # Execute RAT and get results or error
     # Extended std exclusions apply when there's no archive .rat-excludes
     apply_extended_std = excludes_source != "archive"
-    error_result, xml_output_path = _check_core_logic_execute_rat(
-        rat_jar_path, scan_root, temp_dir, effective_excludes_path, apply_extended_std
-    )
+    try:
+        command, xml_output_path = _get_command_and_xml_output_path(
+            temp_dir, effective_excludes_path, apply_extended_std, scan_root, rat_jar_path
+        )
+    except RatError as e:
+        return checkdata.Rat(
+            message=f"Failed to build RAT command: {e}",
+            errors=[str(e)],
+        )
+    error_result, xml_output_path = _check_core_logic_execute_rat(command, scan_root, temp_dir, xml_output_path)
     if error_result is not None:
-        error_result.excludes_source = excludes_source
-        error_result.extended_std_applied = apply_extended_std
         return error_result
 
     # Parse the XML output
@@ -518,6 +524,7 @@ def _synchronous_extract(
 
     result.excludes_source = excludes_source
     result.extended_std_applied = apply_extended_std
+    result.command = command
     return result
 
 
