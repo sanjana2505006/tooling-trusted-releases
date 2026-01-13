@@ -280,85 +280,6 @@ def _check_core_logic_execute_rat(
     return None, xml_output_path
 
 
-def _synchronous_extract_parse_output(xml_file: str, base_dir: str) -> checkdata.Rat:
-    """Parse the XML output from Apache RAT safely."""
-    try:
-        return _synchronous_extract_parse_output_core(xml_file, base_dir)
-    except Exception as e:
-        log.error(f"Error parsing RAT output: {e}")
-        return checkdata.Rat(
-            message=f"Failed to parse Apache RAT output: {e!s}",
-            errors=[f"XML parsing error: {e!s}"],
-        )
-
-
-def _synchronous_extract_parse_output_core(xml_file: str, base_dir: str) -> checkdata.Rat:
-    """Parse the XML output from Apache RAT."""
-    tree = ElementTree.parse(xml_file)
-    root = tree.getroot()
-
-    total_files = 0
-    approved_licenses = 0
-    unapproved_licenses = 0
-    unknown_licenses = 0
-
-    unapproved_files: list[checkdata.RatFileEntry] = []
-    unknown_license_files: list[checkdata.RatFileEntry] = []
-
-    # Process each resource
-    for resource in root.findall(".//resource"):
-        total_files += 1
-
-        # Get the name attribute value
-        name = resource.get("name", "")
-
-        # Remove base_dir prefix for cleaner display
-        if name.startswith(base_dir):
-            name = name[len(base_dir) :].lstrip("/")
-
-        # Get license information
-        license_elem = resource.find("license")
-
-        if license_elem is None:
-            resource_type = resource.get("type", "")
-            if resource_type in {"NOTICE", "BINARY", "IGNORED", "ARCHIVE"}:
-                approved_licenses += 1
-            else:
-                unknown_licenses += 1
-                unknown_license_files.append(checkdata.RatFileEntry(name=name, license="Unknown license"))
-        else:
-            approval = license_elem.get("approval", "false")
-            is_approved = approval == "true"
-            license_name = license_elem.get("name", "Unknown")
-
-            if is_approved:
-                approved_licenses += 1
-            elif license_name == "Unknown license":
-                unknown_licenses += 1
-                unknown_license_files.append(checkdata.RatFileEntry(name=name, license=license_name))
-            else:
-                unapproved_licenses += 1
-                unapproved_files.append(checkdata.RatFileEntry(name=name, license=license_name))
-
-    # Calculate overall validity
-    valid = (unapproved_licenses == 0) and (unknown_licenses == 0)
-
-    # Prepare a summary message of just the right length
-    message = _summary_message(valid, unapproved_licenses, unknown_licenses)
-
-    # We limit the number of files we report to 100
-    return checkdata.Rat(
-        valid=valid,
-        message=message,
-        total_files=total_files,
-        approved_licenses=approved_licenses,
-        unapproved_licenses=unapproved_licenses,
-        unknown_licenses=unknown_licenses,
-        unapproved_files=unapproved_files[:100],
-        unknown_license_files=unknown_license_files[:100],
-    )
-
-
 def _count_files_outside_directory(temp_dir: str, scan_root: str) -> int:
     """Count regular files that exist outside the scan_root directory."""
     count = 0
@@ -623,6 +544,85 @@ def _synchronous_extract_excludes_source(
         effective_excludes_path = None
         log.info("No excludes: using defaults only")
     return excludes_source, effective_excludes_path
+
+
+def _synchronous_extract_parse_output(xml_file: str, base_dir: str) -> checkdata.Rat:
+    """Parse the XML output from Apache RAT safely."""
+    try:
+        return _synchronous_extract_parse_output_core(xml_file, base_dir)
+    except Exception as e:
+        log.error(f"Error parsing RAT output: {e}")
+        return checkdata.Rat(
+            message=f"Failed to parse Apache RAT output: {e!s}",
+            errors=[f"XML parsing error: {e!s}"],
+        )
+
+
+def _synchronous_extract_parse_output_core(xml_file: str, base_dir: str) -> checkdata.Rat:
+    """Parse the XML output from Apache RAT."""
+    tree = ElementTree.parse(xml_file)
+    root = tree.getroot()
+
+    total_files = 0
+    approved_licenses = 0
+    unapproved_licenses = 0
+    unknown_licenses = 0
+
+    unapproved_files: list[checkdata.RatFileEntry] = []
+    unknown_license_files: list[checkdata.RatFileEntry] = []
+
+    # Process each resource
+    for resource in root.findall(".//resource"):
+        total_files += 1
+
+        # Get the name attribute value
+        name = resource.get("name", "")
+
+        # Remove base_dir prefix for cleaner display
+        if name.startswith(base_dir):
+            name = name[len(base_dir) :].lstrip("/")
+
+        # Get license information
+        license_elem = resource.find("license")
+
+        if license_elem is None:
+            resource_type = resource.get("type", "")
+            if resource_type in {"NOTICE", "BINARY", "IGNORED", "ARCHIVE"}:
+                approved_licenses += 1
+            else:
+                unknown_licenses += 1
+                unknown_license_files.append(checkdata.RatFileEntry(name=name, license="Unknown license"))
+        else:
+            approval = license_elem.get("approval", "false")
+            is_approved = approval == "true"
+            license_name = license_elem.get("name", "Unknown")
+
+            if is_approved:
+                approved_licenses += 1
+            elif license_name == "Unknown license":
+                unknown_licenses += 1
+                unknown_license_files.append(checkdata.RatFileEntry(name=name, license=license_name))
+            else:
+                unapproved_licenses += 1
+                unapproved_files.append(checkdata.RatFileEntry(name=name, license=license_name))
+
+    # Calculate overall validity
+    valid = (unapproved_licenses == 0) and (unknown_licenses == 0)
+
+    # Prepare a summary message of just the right length
+    message = _summary_message(valid, unapproved_licenses, unknown_licenses)
+
+    # We limit the number of files we report to 100
+    return checkdata.Rat(
+        valid=valid,
+        message=message,
+        total_files=total_files,
+        approved_licenses=approved_licenses,
+        unapproved_licenses=unapproved_licenses,
+        unknown_licenses=unknown_licenses,
+        unapproved_files=unapproved_files[:100],
+        unknown_license_files=unknown_license_files[:100],
+    )
 
 
 def _synchronous_extract_scan_root(archive_excludes_path: str | None, temp_dir: str) -> str:
