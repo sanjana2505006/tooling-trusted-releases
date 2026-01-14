@@ -112,7 +112,7 @@ class CommitteeParticipant(FoundationCommitter):
     ) -> str | None:
         """Handle the deletion of database records and filesystem data for a release."""
         release = await self.__data.release(
-            project_name=project_name, version=version, phase=phase, _project=True
+            project_name=project_name, version=version, phase=phase, _committee=True
         ).demand(storage.AccessError(f"Release '{project_name} {version}' not found."))
         release_dir = util.release_directory_base(release)
 
@@ -139,14 +139,21 @@ class CommitteeParticipant(FoundationCommitter):
         check_count = check_result.rowcount if isinstance(check_result, engine.CursorResult) else 0
         log.debug(f"Deleted {util.plural(check_count, 'check result')} for {project_name} {version}")
 
-        # TODO: Ensure that revisions are not deleted
-        # But this makes testing difficult
-        # Perhaps delete revisions if associated with test accounts only
-        # But we want to test actual mechanisms, not special case tests
-        # We could create uniquely named releases in tests
-        # Currently part of the discussion in #171, but should be its own issue
+        release_name = release.name
         await self.__data.delete(release)
         log.info(f"Deleted release record: {project_name} {version}")
+
+        # In test mode, delete the counter for test committee releases
+        # This allows revision numbers to be reused in testing
+        committee = release.project.committee
+        is_test_release = config.get().ALLOW_TESTS and (committee is not None) and (committee.name == "test")
+        if is_test_release:
+            counter_delete_stmt = sqlmodel.delete(sql.RevisionCounter).where(
+                via(sql.RevisionCounter.release_name) == release_name
+            )
+            await self.__data.execute(counter_delete_stmt)
+            log.info(f"Deleted revision counter for test release: {release_name}")
+
         await self.__data.commit()
 
         if include_downloads:

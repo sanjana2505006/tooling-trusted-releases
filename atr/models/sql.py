@@ -28,6 +28,7 @@ from typing import Any, Final, Literal, Optional, TypeVar
 
 import pydantic
 import sqlalchemy
+import sqlalchemy.dialects.sqlite as sqlite
 import sqlalchemy.event as event
 import sqlalchemy.orm as orm
 import sqlalchemy.sql.expression as expression
@@ -1190,7 +1191,7 @@ def revision_name(release_name: str, number: str) -> str:
 
 @event.listens_for(Revision, "before_insert")
 def populate_revision_sequence_and_name(
-    mapper: orm.Mapper, connection: sqlalchemy.engine.Connection, revision: Revision
+    _mapper: orm.Mapper, connection: sqlalchemy.engine.Connection, revision: Revision
 ) -> None:
     # We require Revision.release_name to have been set
     if not revision.release_name:
@@ -1198,36 +1199,36 @@ def populate_revision_sequence_and_name(
         # Otherwise, Revision.name would be "", Revision.seq 0, and Revision.number ""
         raise RuntimeError("Cannot populate revision sequence and name without release_name")
 
-    # Get the Revision with the maximum existing Revision.seq and the same Revision.release_name
-    stmt = (
-        sqlmodel.select(Revision.seq, Revision.name)
-        .where(Revision.release_name == revision.release_name)
+    # Allocate the next sequence number from the counter table
+    # This ensures that sequence numbers are never reused, even after release deletion
+    # Uses ON CONFLICT DO UPDATE with RETURNING
+    upsert_stmt = (
+        sqlite.insert(RevisionCounter)
+        .values(release_name=revision.release_name, last_allocated_number=1)
+        .on_conflict_do_update(
+            index_elements=["release_name"],
+            set_={"last_allocated_number": sqlalchemy.text("last_allocated_number + 1")},
+        )
+        .returning(sqlalchemy.literal_column("last_allocated_number"))
+    )
+    result = connection.execute(upsert_stmt)
+    new_seq = result.scalar_one()
+
+    revision.seq = new_seq
+    revision.number = str(new_seq).zfill(5)
+    revision.name = revision_name(revision.release_name, revision.number)
+
+    # Find the actual parent for the parent_name foreign key
+    # We cannot assume that the parent exists
+    parent_stmt = (
+        sqlmodel.select(validate_instrumented_attribute(Revision.name))
+        .where(validate_instrumented_attribute(Revision.release_name) == revision.release_name)
         .order_by(sqlalchemy.desc(validate_instrumented_attribute(Revision.seq)))
         .limit(1)
     )
-    parent_row = connection.execute(stmt).fetchone()
-
-    # We cannot happy path this, because we must recalculate the Revision.name afterwards
-    if parent_row is None:
-        # This is the first Revision for this Revision.release_name
-        # Revision.seq is 0, but we use a 1-based system
-        revision.seq = 1
-        revision.number = str(revision.seq).zfill(5)
-    else:
-        # We don't have the ORM available in this event listener
-        # Therefore we must construct a new Revision object from the database row
-        parent_row_seq = parent_row.seq
-        parent_row_name = parent_row.name
-        # Compute the next sequence number
-        revision.seq = parent_row_seq + 1
-        revision.number = str(revision.seq).zfill(5)
-        # Set the parent_name foreign key. SQLAlchemy will handle the relationship.
-        revision.parent_name = parent_row_name
-        # Do NOT set revision.parent directly here
-
-    # Recalculate the Revision.name
-    # This field has a unique constraint, which eliminates the potential for race conditions
-    revision.name = revision_name(revision.release_name, revision.number)
+    parent_row = connection.execute(parent_stmt).fetchone()
+    if parent_row is not None:
+        revision.parent_name = parent_row[0]
 
 
 @event.listens_for(Release, "before_insert")
