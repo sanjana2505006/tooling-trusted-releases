@@ -19,6 +19,8 @@
 
 ATR knows about several kinds of components that correspond to organizational resources at the ASF, but some of the components mean a slightly different thing in ATR or are customized in some way. This page documents the major things to know about, and what's special about them.
 
+The way that ATR models components has the effect of incorporating extremes such as Airflow, Maven, Commons, Sling, etc. We studied the release patterns before designing this system, and we plan eventually to catalog all current project releases in a new system adjacent to or included within ATR.
+
 ## Committee
 
 A **committee** in ATR is a PMC (Project Management Committee), or a PPMC (Podling Project Management Committee). The concept of a committee is important in ATR because both its members and all release managers have elevated permissions compared to non-member and non-release-manager committers.
