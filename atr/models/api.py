@@ -124,6 +124,40 @@ class DistributionRecordArgs(schema.Strict):
         return v.name if isinstance(v, sql.DistributionPlatform) else v
 
 
+class DistributionRecordFromWorkflowArgs(schema.Strict):
+    asf_uid: str = schema.example("user")
+    publisher: str = schema.example("user")
+    jwt: str = schema.example("eyJhbGciOiJIUzI1[...]mMjLiuyu5CSpyHI=")
+    project: str = schema.example("example")
+    version: str = schema.example("0.0.1")
+    platform: sql.DistributionPlatform = schema.example(sql.DistributionPlatform.ARTIFACT_HUB)
+    distribution_owner_namespace: str | None = schema.default_example(None, "example")
+    distribution_package: str = schema.example("example")
+    distribution_version: str = schema.example("0.0.1")
+    phase: str = schema.Field(strict=False, default="compose", json_schema_extra={"examples": ["compose", "finish"]})
+    staging: bool = schema.example(False)
+    details: bool = schema.example(False)
+
+    @pydantic.field_validator("platform", mode="before")
+    @classmethod
+    def platform_to_enum(cls, v):
+        if isinstance(v, str):
+            try:
+                return sql.DistributionPlatform.__members__[v]
+            except KeyError:
+                raise ValueError(f"'{v}' is not a valid DistributionPlatform")
+        return v
+
+    @pydantic.field_serializer("platform")
+    def serialise_platform(self, v):
+        return v.name if isinstance(v, sql.DistributionPlatform) else v
+
+
+class DistributionRecordFromWorkflowResults(schema.Strict):
+    endpoint: Literal["/distribute/record_from_workflow"] = schema.alias("endpoint")
+    success: Literal[True] = schema.example(True)
+
+
 class DistributionRecordResults(schema.Strict):
     endpoint: Literal["/distribution/record"] = schema.alias("endpoint")
     success: Literal[True] = schema.example(True)

@@ -343,6 +343,44 @@ async def distribution_record(data: models.api.DistributionRecordArgs) -> DictRe
     ).model_dump(), 200
 
 
+@api.route("/distribute/record_from_workflow", methods=["POST"])
+@quart_schema.validate_request(models.api.DistributeStatusUpdateArgs)
+async def distribution_record_from_workflow(data: models.api.DistributionRecordFromWorkflowArgs) -> DictResponse:
+    """
+    Record a distribution.
+    """
+    _payload, asf_uid, _project, release = await interaction.trusted_jwt_for_dist(
+        data.publisher,
+        data.jwt,
+        data.asf_uid,
+        interaction.TrustedProjectPhase(data.phase),
+        data.project,
+        data.version,
+    )
+    # TODO: Split the below code into a new function and reuse in /publisher and /distribution / record.
+    if release.committee is None:
+        raise exceptions.NotFound(f"Release {release.name} has no committee")
+    dd = models.distribution.Data(
+        platform=data.platform,
+        owner_namespace=data.distribution_owner_namespace,
+        package=data.distribution_package,
+        version=data.distribution_version,
+        details=data.details,
+    )
+    async with storage.write(asf_uid) as write:
+        wacm = write.as_committee_member(release.committee.name)
+        await wacm.distributions.record_from_data(
+            release.name,
+            data.staging,
+            dd,
+        )
+
+    return models.api.DistributionRecordFromWorkflowResults(
+        endpoint="/distribute/record_from_workflow",
+        success=True,
+    ).model_dump(), 200
+
+
 @api.route("/ignore/add", methods=["POST"])
 @jwtoken.require
 @quart_schema.security_scheme([{"BearerAuth": []}])
