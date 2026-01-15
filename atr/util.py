@@ -825,7 +825,7 @@ def release_directory_version(release: sql.Release) -> pathlib.Path:
 
 
 async def session_cache_read() -> dict[str, dict]:
-    cache_path = pathlib.Path(config.get().STATE_DIR) / "user_session_cache.json"
+    cache_path = pathlib.Path(config.get().STATE_DIR) / "cache" / "user_session_cache.json"
     try:
         async with aiofiles.open(cache_path) as f:
             content = await f.read()
@@ -837,7 +837,7 @@ async def session_cache_read() -> dict[str, dict]:
 
 
 async def session_cache_write(cache_data: dict[str, dict]) -> None:
-    cache_path = pathlib.Path(config.get().STATE_DIR) / "user_session_cache.json"
+    cache_path = pathlib.Path(config.get().STATE_DIR) / "cache" / "user_session_cache.json"
     await atomic_write_file(cache_path, json.dumps(cache_data, indent=2))
 
 

@@ -113,6 +113,7 @@ def _app_dirs_setup(app_config: type[config.AppConfig]) -> None:
 
     directories_to_ensure = [
         pathlib.Path(app_config.STATE_DIR) / "audit",
+        pathlib.Path(app_config.STATE_DIR) / "cache",
         util.get_downloads_dir(),
         util.get_finished_dir(),
         util.get_tmp_dir(),
@@ -491,6 +492,17 @@ def _migrate_audit(state_dir: pathlib.Path) -> None:
     )
 
 
+def _migrate_cache(state_dir: pathlib.Path) -> None:
+    _migrate_file(
+        state_dir / "routes.json",
+        state_dir / "cache" / "routes.json",
+    )
+    _migrate_file(
+        state_dir / "user_session_cache.json",
+        state_dir / "cache" / "user_session_cache.json",
+    )
+
+
 def _migrate_directory(old_path: pathlib.Path, new_path: pathlib.Path) -> None:
     if old_path.exists() and (not new_path.exists()):
         old_path.rename(new_path)
@@ -522,6 +534,7 @@ def _migrate_state_directory(app_config: type[config.AppConfig]) -> None:
         fcntl.flock(lock_file, fcntl.LOCK_EX)
         try:
             _migrate_audit(state_dir)
+            _migrate_cache(state_dir)
         finally:
             fcntl.flock(lock_file, fcntl.LOCK_UN)
 
