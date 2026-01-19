@@ -107,12 +107,14 @@ run-playwright-slow:
 	docker run --net=host -it atr-playwright python3 test.py --tidy
 
 serve:
+	@scripts/check-certs
 	SSH_HOST=127.0.0.1 uv run --frozen hypercorn --bind $(BIND) \
 	  --keyfile hypercorn/secrets/localhost.apache.org+2-key.pem \
 	  --certfile hypercorn/secrets/localhost.apache.org+2.pem \
 	  atr.server:app --debug --reload --worker-class uvloop
 
 serve-local:
+	@scripts/check-certs
 	APP_HOST=localhost.apache.org:8080 DISABLE_CHECK_CACHE=1 ALLOW_TESTS=1 \
 	  SSH_HOST=127.0.0.1 uv run --frozen hypercorn --bind $(BIND) \
 	  --keyfile hypercorn/secrets/localhost.apache.org+2-key.pem \
