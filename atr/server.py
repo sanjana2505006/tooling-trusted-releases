@@ -114,7 +114,11 @@ def main() -> None:
     global app
     if app is None:
         app = _create_app(config.get())
-    app.run(port=8080, ssl_keyfile="key.pem", ssl_certfile="cert.pem")
+    app.run(
+        port=8080,
+        ssl_keyfile="hypercorn/secrets/key.pem",
+        ssl_certfile="hypercorn/secrets/cert.pem",
+    )
 
 
 def _app_create_base(app_config: type[config.AppConfig]) -> base.QuartApp:
@@ -139,11 +143,13 @@ def _app_dirs_setup(state_dir_str: str, hot_reload: bool) -> None:
     if hot_reload is False:
         print(f"Working directory changed to: {os.getcwd()}")
 
+    # Note that the hypercorn directories are not managed by ATR
     directories_to_ensure = [
         pathlib.Path(state_dir_str) / "audit",
         pathlib.Path(state_dir_str) / "cache",
         pathlib.Path(state_dir_str) / "database",
-        pathlib.Path(state_dir_str) / "external",
+        pathlib.Path(state_dir_str) / "hypercorn" / "logs",
+        pathlib.Path(state_dir_str) / "hypercorn" / "secrets",
         pathlib.Path(state_dir_str) / "logs",
         pathlib.Path(state_dir_str) / "runtime",
         pathlib.Path(state_dir_str) / "secrets" / "curated",

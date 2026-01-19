@@ -83,7 +83,7 @@ cd tests && docker compose logs atr-dev --tail 100
 
 ```shell
 # View the Hypercorn logs
-docker compose exec atr-dev cat /opt/atr/state/external/hypercorn.log
+docker compose exec atr-dev cat /opt/atr/state/hypercorn/logs/hypercorn.log
 
 # View the worker logs
 docker compose exec atr-dev cat /opt/atr/state/logs/atr-worker.log

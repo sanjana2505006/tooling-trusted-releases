@@ -10,13 +10,14 @@ from cryptography.x509.oid import NameOID
 
 # All state is placed in this directory
 STATE_DIR = os.environ.get("STATE_DIR", "./state")
-CERT_PATH = os.path.join(STATE_DIR, "cert.pem")
-KEY_PATH = os.path.join(STATE_DIR, "key.pem")
+HYPERCORN_SECRETS_DIR = os.path.join(STATE_DIR, "hypercorn", "secrets")
+CERT_PATH = os.path.join(HYPERCORN_SECRETS_DIR, "cert.pem")
+KEY_PATH = os.path.join(HYPERCORN_SECRETS_DIR, "key.pem")
 
 
 def generate_self_signed_cert() -> None:
-    # Ensure the state directory exists
-    os.makedirs(STATE_DIR, exist_ok=True)
+    # Ensure that the Hypercorn secrets directory exists
+    os.makedirs(HYPERCORN_SECRETS_DIR, exist_ok=True)
 
     # Generate a private RSA key
     key = rsa.generate_private_key(
