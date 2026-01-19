@@ -14,7 +14,9 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+from collections.abc import Sequence
 
+import asfquart.base as base
 
 import atr.blueprints.get as get
 import atr.db as db
@@ -27,6 +29,7 @@ import atr.shared as shared
 import atr.template as template
 import atr.util as util
 import atr.web as web
+from atr.tasks import gha
 
 
 @get.committer("/distribution/automate/<project>/<version>")
@@ -36,10 +39,7 @@ async def automate(session: web.Committer, project: str, version: str) -> str:
 
 @get.committer("/distributions/list/<project_name>/<version_name>")
 async def list_get(session: web.Committer, project_name: str, version_name: str) -> str:
-    async with db.session() as data:
-        distributions = await data.distribution(
-            release_name=sql.release_name(project_name, version_name),
-        ).all()
+    distributions, tasks = await _get_page_data(project_name, version_name)
 
     block = htm.Block()
 
@@ -58,6 +58,12 @@ async def list_get(session: web.Committer, project_name: str, version_name: str)
 
     # Distribution list for project-version
     block.h1["Distribution list for ", htm.em[f"{project_name}-{version_name}"]]
+    if len(tasks) > 0:
+        block.div(".alert.alert-info.mb-3")[
+            htm.p["The following distribution workflow tasks are currently running or have failed:"],
+            htm.div[*[_render_task(t) for t in tasks]],
+        ]
+
     if not distributions:
         block.p["No distributions found."]
         block.p[record_a_distribution]
@@ -170,6 +176,38 @@ async def _automate_form_page(project: str, version: str, staging: bool) -> str:
     return await template.blank(title, content=block.collect())
 
 
+async def _get_page_data(project_name: str, version_name: str) -> tuple[Sequence[sql.Distribution], Sequence[sql.Task]]:
+    """Get all the data needed to render the finish page."""
+    async with db.session() as data:
+        via = sql.validate_instrumented_attribute
+        distributions = await data.distribution(
+            release_name=sql.release_name(project_name, version_name),
+        ).all()
+        release = await data.release(
+            project_name=project_name,
+            version=version_name,
+            _committee=True,
+        ).demand(base.ASFQuartException("Release does not exist", errorcode=404))
+        tasks = [
+            t
+            for t in (
+                await data.task(
+                    project_name=project_name,
+                    version_name=version_name,
+                    revision_number=release.latest_revision_number,
+                    task_type=sql.TaskType.DISTRIBUTION_WORKFLOW,
+                    _workflow=True,
+                )
+                .order_by(sql.sqlmodel.desc(via(sql.Task.started)))
+                .all()
+            )
+            if t.status in [sql.TaskStatus.QUEUED, sql.TaskStatus.ACTIVE, sql.TaskStatus.FAILED]
+            or (t.workflow and t.workflow.status in ["in-progress", "failed"])
+        ]
+
+    return distributions, tasks
+
+
 async def _record_form_page(project: str, version: str, staging: bool) -> str:
     """Helper to render the distribution recording form page."""
     await shared.distribution.release_validated(project, version, staging=staging)
@@ -208,3 +246,23 @@ async def _record_form_page(project: str, version: str, staging: bool) -> str:
     block.append(form_html)
 
     return await template.blank(title, content=block.collect())
+
+
+def _render_task(task: sql.Task) -> htm.Element:
+    """Render a distribution task's details."""
+    args: gha.DistributionWorkflow = gha.DistributionWorkflow.model_validate(task.task_args)
+    task_date = task.added.strftime("%Y-%m-%d %H:%M:%S")
+    task_status = task.status.value
+    workflow_status = task.workflow.status if task.workflow else ""
+    workflow_message = (
+        task.workflow.message if task.workflow and task.workflow.message else workflow_status.capitalize()
+    )
+    if task_status != sql.TaskStatus.COMPLETED:
+        return htm.details[
+            htm.summary[f"{task_date} {args.platform} ({args.package} {args.version})"],
+            htm.p[task.error if task.error else task_status.capitalize()],
+        ]
+    else:
+        return htm.details[
+            htm.summary[f"{task_date} {args.platform} ({args.package} {args.version})"], htm.p[workflow_message]
+        ]
