@@ -79,7 +79,7 @@ class AppConfig:
     ATTESTABLE_STORAGE_DIR = os.path.join(STATE_DIR, "attestable")
     SQLITE_DB_PATH = decouple.config("SQLITE_DB_PATH", default="database/atr.db")
     STORAGE_AUDIT_LOG_FILE = os.path.join(STATE_DIR, "audit", "storage-audit.log")
-    PERFORMANCE_LOG_FILE = os.path.join(STATE_DIR, "route-performance.log")
+    PERFORMANCE_LOG_FILE = os.path.join(STATE_DIR, "logs", "route-performance.log")
 
     # Apache RAT configuration
     APACHE_RAT_JAR_PATH = decouple.config("APACHE_RAT_JAR_PATH", default=f"/opt/tools/apache-rat-{_RAT_VERSION}.jar")

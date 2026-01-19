@@ -48,7 +48,7 @@ Detects external access to private interfaces in Python modules. Reports any acc
 
 ## keys\_import.py
 
-Imports OpenPGP public keys from ASF committee KEYS files into the ATR database. Downloads each committee's `KEYS` file from `https://downloads.apache.org/{committee}/KEYS`, parses the keys, and updates the database. Logs all activity to `state/keys_import.log`.
+Imports OpenPGP public keys from ASF committee KEYS files into the ATR database. Downloads each committee's `KEYS` file from `https://downloads.apache.org/{committee}/KEYS`, parses the keys, and updates the database. Logs all activity to `state/logs/keys-import.log`.
 
 ## lint/jinja\_route\_checker.py
 

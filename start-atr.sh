@@ -11,6 +11,7 @@ then
   python3 scripts/generate-certificates
 fi
 
-echo "Starting hypercorn on ${BIND}" >> /opt/atr/state/hypercorn.log
+mkdir -p /opt/atr/state/logs
+echo "Starting hypercorn on ${BIND}" >> /opt/atr/state/logs/hypercorn.log
 exec hypercorn --worker-class uvloop --bind "${BIND}" \
-  --keyfile key.pem --certfile cert.pem atr.server:app >> /opt/atr/state/hypercorn.log 2>&1
+  --keyfile key.pem --certfile cert.pem atr.server:app >> /opt/atr/state/logs/hypercorn.log 2>&1

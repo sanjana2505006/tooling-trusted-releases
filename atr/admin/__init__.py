@@ -478,7 +478,8 @@ async def keys_update_get(session: web.Committer) -> str | web.WerkzeugResponse 
         empty=True,
         form_classes="",
     )
-    log_path = pathlib.Path("keys_import.log")
+    # TODO: All known file paths should be constants
+    log_path = pathlib.Path("logs") / "keys-import.log"
     if not await aiofiles.os.path.exists(log_path):
         previous_output = None
     else:
@@ -596,7 +597,7 @@ async def performance(session: web.Committer) -> str:
         raise base.ASFQuartException("APP is not set", errorcode=500)
 
     # Read and parse the performance log file
-    log_path = pathlib.Path("route-performance.log")
+    log_path = pathlib.Path("logs") / "route-performance.log"
     # # Show current working directory and its files
     # cwd = await asyncio.to_thread(Path.cwd)
     # await asyncio.to_thread(APP.logger.info, "Current working directory: %s", cwd)

@@ -98,7 +98,8 @@ def _setup_logging() -> None:
     log_format = "[%(asctime)s.%(msecs)03d] [%(process)d] [%(levelname)s] %(message)s"
     date_format = "%Y-%m-%d %H:%M:%S"
 
-    logging.basicConfig(filename="atr-worker.log", format=log_format, datefmt=date_format, level=logging.INFO)
+    os.makedirs("logs", exist_ok=True)
+    logging.basicConfig(filename="logs/atr-worker.log", format=log_format, datefmt=date_format, level=logging.INFO)
 
 
 # Task functions
@@ -309,6 +310,7 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        with open("atr-worker-error.log", "a") as f:
+        os.makedirs("logs", exist_ok=True)
+        with open("logs/atr-worker-error.log", "a") as f:
             f.write(f"{datetime.datetime.now(datetime.UTC)}: {e}\n")
             f.flush()
