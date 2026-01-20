@@ -232,7 +232,7 @@ def _render_distribution_tasks(release: sql.Release, tasks: Sequence[sql.Task]) 
         t
         for t in tasks
         if t.status in [sql.TaskStatus.QUEUED, sql.TaskStatus.ACTIVE]
-        or (t.workflow and t.workflow.status not in ["success", "failed"])
+        or (t.workflow and t.workflow.status not in ["completed", "success", "failed"])
     ]
 
     block = htm.Block()
@@ -255,7 +255,7 @@ def _render_distribution_tasks(release: sql.Release, tasks: Sequence[sql.Task]) 
                 htm.p["One or more automatic distributions are still in-progress:"],
                 *[_render_task(f) for f in in_progress_tasks],
                 htm.a(
-                    ".btn.btn-success.me-2",
+                    ".btn.btn-success.mt-2",
                     href=util.as_url(
                         selected,
                         project_name=release.project.name,
@@ -555,13 +555,15 @@ def _render_task(task: sql.Task) -> htm.Element:
         task.workflow.message if task.workflow and task.workflow.message else workflow_status.capitalize()
     )
     if task_status != sql.TaskStatus.COMPLETED:
-        return htm.p[
-            f"{task_date} {args.platform} ({args.package} {args.version}): {
-                task.error if task.error else task_status.capitalize()
-            }"
+        return htm.details(".ms-4")[
+            htm.summary[f"{task_date} {args.platform} ({args.package} {args.version})"],
+            htm.p(".ms-4")[task.error if task.error else task_status.capitalize()],
         ]
     else:
-        return htm.p[f"{task_date} {args.platform} ({args.package} {args.version}): {workflow_message}"]
+        return htm.details(".ms-4")[
+            htm.summary[f"{task_date} {args.platform} ({args.package} {args.version})"],
+            *[htm.p(".ms-4")[w] for w in workflow_message.split("\n")],
+        ]
 
 
 async def _sources_and_targets(latest_revision_dir: pathlib.Path) -> tuple[list[pathlib.Path], set[pathlib.Path]]:
