@@ -25,6 +25,7 @@ import multiprocessing
 import os
 import pathlib
 import queue
+import stat
 import sys
 import urllib.parse
 from collections.abc import Iterable
@@ -433,6 +434,7 @@ def _create_app(app_config: type[config.AppConfig]) -> base.QuartApp:
     _validate_config(app_config, hot_reload)
     _migrate_state(app_config.STATE_DIR, hot_reload)
     _app_dirs_setup(app_config.STATE_DIR, hot_reload)
+    _validate_secrets_permissions(pathlib.Path(app_config.STATE_DIR))
     log.performance_init()
     app = _app_create_base(app_config)
 
@@ -722,6 +724,33 @@ def _validate_config(app_config: type[config.AppConfig], hot_reload: bool) -> No
         print("We are considering making this mandatory", file=sys.stderr)
         print("!!!", file=sys.stderr)
         # sys.exit(1)
+
+
+def _validate_secrets_permissions(state_dir: pathlib.Path) -> None:
+    secrets_dirs = [
+        state_dir / "secrets",
+        state_dir / "hypercorn" / "secrets",
+    ]
+    incorrect_files: list[tuple[pathlib.Path, int, int]] = []
+
+    for secrets_dir in secrets_dirs:
+        if not secrets_dir.exists():
+            continue
+        for path in secrets_dir.rglob("*"):
+            if not path.is_file():
+                continue
+            mode = stat.S_IMODE(path.stat().st_mode)
+            expected = 0o600 if (path.name == "apptoken.txt") else 0o400
+            if mode != expected:
+                incorrect_files.append((path, mode, expected))
+
+    if incorrect_files:
+        print("!!!", file=sys.stderr)
+        print("ERROR: Secrets files have incorrect permissions", file=sys.stderr)
+        for path, mode, expected in incorrect_files:
+            print(f"  {path}: {oct(mode)} (expected {oct(expected)})", file=sys.stderr)
+        print("!!!", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

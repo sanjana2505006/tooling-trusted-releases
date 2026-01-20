@@ -47,7 +47,7 @@ certs:
 
 certs-local:
 	mkdir -p $(STATE_DIR)/hypercorn/secrets
-	cd $(STATE_DIR)/hypercorn/secrets && mkcert localhost.apache.org 127.0.0.1 ::1
+	cd $(STATE_DIR)/hypercorn/secrets && umask 277 && mkcert localhost.apache.org 127.0.0.1 ::1
 
 check:
 	git add -A
@@ -108,6 +108,7 @@ run-playwright-slow:
 
 serve:
 	@scripts/check-certs
+	@scripts/check-perms
 	SSH_HOST=127.0.0.1 uv run --frozen hypercorn --bind $(BIND) \
 	  --keyfile hypercorn/secrets/localhost.apache.org+2-key.pem \
 	  --certfile hypercorn/secrets/localhost.apache.org+2.pem \
@@ -115,6 +116,7 @@ serve:
 
 serve-local:
 	@scripts/check-certs
+	@scripts/check-perms
 	APP_HOST=localhost.apache.org:8080 DISABLE_CHECK_CACHE=1 ALLOW_TESTS=1 \
 	  SSH_HOST=127.0.0.1 uv run --frozen hypercorn --bind $(BIND) \
 	  --keyfile hypercorn/secrets/localhost.apache.org+2-key.pem \

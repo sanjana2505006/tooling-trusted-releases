@@ -50,7 +50,8 @@ def generate_self_signed_cert() -> None:
         .sign(key, hashes.SHA256())
     )
 
-    # Write out the private key
+    # Write out the private key with 400 permissions
+    os.umask(0o277)
     with open(KEY_PATH, "wb") as f:
         f.write(
             key.private_bytes(
