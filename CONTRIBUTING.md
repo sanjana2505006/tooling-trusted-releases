@@ -76,7 +76,7 @@ For detailed ASF policies, commit message guidelines, and security consideration
    sh tests/run-unit.sh    # Required: unit tests
    ```
 
-   All checks and tests must pass locally before submitting.
+   All checks and tests must pass locally before submitting. If `pip-audit` is reporting false positive CVEs, try running `uv run --frozen pre-commit clean` first.
 
 4. **Commit** with a clear message (see [commit style](#commit-message-style) below)
 
@@ -167,6 +167,8 @@ sh tests/run-playwright.sh
 # Quick pre-commit checks (for rapid iteration)
 make check-light
 ```
+
+Run `uv run --frozen pre-commit clean` if `pip-audit` reports false positive CVEs during checks.
 
 ## ASF requirements
 
