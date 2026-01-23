@@ -19,6 +19,7 @@
 
 import functools
 
+import atr.cache as cache
 import atr.config as config
 import atr.db as db
 import atr.models.sql as sql
@@ -37,21 +38,24 @@ async def candidate_drafts(uid: str, user_projects: list[sql.Project] | None = N
     return user_candidate_drafts
 
 
-@functools.cache
-def get_admin_users() -> set[str]:
-    admin_users = set(config.get().ADMIN_USERS)
-    if config.get().ALLOW_TESTS:
-        # TODO: Just for debugging, but ideally we would do this in a targeted way
-        # We need this, for example, for deleting releases
-        admin_users.add("test")
-    return admin_users
-
-
 def is_admin(user_id: str | None) -> bool:
-    """Check whether a user is an admin."""
     if user_id is None:
         return False
-    return user_id in get_admin_users()
+    if config.get().ALLOW_TESTS and (user_id == "test"):
+        return True
+    if user_id in _get_additional_admin_users():
+        return True
+    return user_id in cache.admins_get()
+
+
+async def is_admin_async(user_id: str | None) -> bool:
+    if user_id is None:
+        return False
+    if config.get().ALLOW_TESTS and (user_id == "test"):
+        return True
+    if user_id in _get_additional_admin_users():
+        return True
+    return user_id in await cache.admins_get_async()
 
 
 def is_committee_member(committee: sql.Committee | None, uid: str) -> bool:
@@ -90,3 +94,11 @@ async def projects(uid: str, committee_only: bool = False, super_project: bool =
                 if (uid in p.committee.committee_members) or (uid in p.committee.committers):
                     user_projects.append(p)
     return user_projects
+
+
+@functools.cache
+def _get_additional_admin_users() -> frozenset[str]:
+    additional = config.get().ADMIN_USERS_ADDITIONAL
+    if not additional:
+        return frozenset()
+    return frozenset(additional.split(","))

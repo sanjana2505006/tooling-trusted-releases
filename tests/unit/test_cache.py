@@ -95,6 +95,38 @@ def test_admins_cache_validates_with_good_data():
 
 
 @pytest.mark.asyncio
+async def test_admins_get_async_falls_back_to_file_without_app_context(
+    state_dir: pathlib.Path, monkeypatch: "MonkeyPatch"
+):
+    def raise_runtime_error() -> frozenset[str]:
+        raise RuntimeError("No app context")
+
+    monkeypatch.setattr("atr.cache.admins_get", raise_runtime_error)
+
+    await cache.admins_save_to_file(frozenset({"file_alice", "file_bob"}))
+    result = await cache.admins_get_async()
+    assert result == frozenset({"file_alice", "file_bob"})
+
+
+@pytest.mark.asyncio
+async def test_admins_get_async_uses_extensions_when_available(mock_app: _MockApp):
+    mock_app.extensions["admins"] = frozenset({"async_alice"})
+    result = await cache.admins_get_async()
+    assert result == frozenset({"async_alice"})
+
+
+def test_admins_get_returns_empty_frozenset_when_not_set(mock_app: _MockApp):
+    result = cache.admins_get()
+    assert result == frozenset()
+
+
+def test_admins_get_returns_frozenset_from_extensions(mock_app: _MockApp):
+    mock_app.extensions["admins"] = frozenset({"alice", "bob"})
+    result = cache.admins_get()
+    assert result == frozenset({"alice", "bob"})
+
+
+@pytest.mark.asyncio
 async def test_admins_read_from_file_returns_none_for_invalid_json(state_dir: pathlib.Path):
     cache_path = state_dir / "cache" / "admins.json"
     cache_path.parent.mkdir(parents=True)

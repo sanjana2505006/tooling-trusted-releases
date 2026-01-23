@@ -140,7 +140,7 @@ async def _check_admin_access() -> None:
     if web_session is None:
         raise base.ASFQuartException("Not authenticated", errorcode=401)
 
-    if web_session.uid not in user.get_admin_users():
+    if not user.is_admin(web_session.uid):
         raise base.ASFQuartException("You are not authorized to access the admin interface", errorcode=403)
 
     quart.g.session = web.Committer(web_session)

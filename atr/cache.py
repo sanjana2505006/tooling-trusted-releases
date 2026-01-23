@@ -38,6 +38,21 @@ class AdminsCache(schema.Strict):
     admins: frozenset[str] = schema.description("Set of admin user IDs from LDAP")
 
 
+def admins_get() -> frozenset[str]:
+    app = asfquart.APP
+    return app.extensions.get("admins", frozenset())
+
+
+async def admins_get_async() -> frozenset[str]:
+    try:
+        return admins_get()
+    except RuntimeError:
+        cache_data = await admins_read_from_file()
+        if cache_data is None:
+            return frozenset()
+        return cache_data.admins
+
+
 async def admins_read_from_file() -> AdminsCache | None:
     cache_path = _admins_path()
     if not cache_path.exists():

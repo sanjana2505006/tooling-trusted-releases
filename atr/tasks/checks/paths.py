@@ -179,7 +179,7 @@ async def _check_path_process_single(
     relative_path_str = str(relative_path)
 
     # For debugging and testing
-    if user.is_admin(asf_uid) and (full_path.name == "deliberately_slow_ATR_task_filename.txt"):
+    if (await user.is_admin_async(asf_uid)) and (full_path.name == "deliberately_slow_ATR_task_filename.txt"):
         await asyncio.sleep(20)
 
     errors: list[str] = []

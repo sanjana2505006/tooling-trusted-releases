@@ -120,22 +120,7 @@ class AppConfig:
     SESSION_COOKIE_SAMESITE = "Strict"
     SESSION_COOKIE_NAME = "__Host-session"
 
-    # FIXME: retrieve the list of admin users from LDAP or oath session / isRoot
     ADMIN_USERS_ADDITIONAL = decouple.config("ADMIN_USERS_ADDITIONAL", default="", cast=str)
-    ADMIN_USERS = frozenset(
-        {
-            "cwells",
-            "dfoulks",
-            "fluxo",
-            "gmcdonald",
-            "humbedooh",
-            "sbp",
-            "akm",
-            "arm",
-            "wave",
-        }
-        | set(ADMIN_USERS_ADDITIONAL.split(",") if ADMIN_USERS_ADDITIONAL else [])
-    )
 
 
 class DebugConfig(AppConfig):
