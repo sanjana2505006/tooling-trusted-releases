@@ -274,7 +274,7 @@ async def release_ready_for_vote(
         if await has_failing_checks(release, revision, caller_data=data):
             return "This release candidate draft has errors. Please fix the errors before starting a vote."
 
-    if not (user.is_committee_member(committee, session.uid) or user.is_admin(session.uid)):
+    if not (user.is_committee_member(committee, session.uid) or session.is_admin):
         return "You must be on the PMC of this project to start a vote"
 
     has_files = await util.has_files(release)

@@ -141,7 +141,7 @@ async def view(session: web.Committer, name: str) -> web.WerkzeugResponse | str:
         ).demand(base.ASFQuartException(f"Project {name} not found", errorcode=404))
 
     is_committee_member = project.committee and (user.is_committee_member(project.committee, session.uid))
-    is_privileged = user.is_admin(session.uid)
+    is_privileged = session.is_admin
     can_edit = is_committee_member or is_privileged
 
     candidate_drafts = await interaction.candidate_drafts(project)

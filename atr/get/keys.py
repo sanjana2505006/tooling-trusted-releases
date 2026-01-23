@@ -30,7 +30,6 @@ import atr.post as post
 import atr.shared as shared
 import atr.storage as storage
 import atr.template as template
-import atr.user as user
 import atr.util as util
 import atr.web as web
 
@@ -326,7 +325,7 @@ async def _key_and_is_owner(
         key_committee_names = {c.name for c in key.committees}
         if user_affiliations.intersection(key_committee_names):
             authorised = True
-        elif user.is_admin(session.uid):
+        elif session.is_admin:
             authorised = True
 
     if not authorised:

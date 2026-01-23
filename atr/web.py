@@ -82,9 +82,13 @@ class Committer:
     def app_host(self) -> str:
         return config.get().APP_HOST
 
+    @property
+    def is_admin(self) -> bool:
+        return user.is_admin(self.uid)
+
     async def check_access(self, project_name: str) -> None:
         if not any((p.name == project_name) for p in (await self.user_projects)):
-            if user.is_admin(self.uid):
+            if self.is_admin:
                 # Admins can view all projects
                 # But we must warn them when the project is not one of their own
                 # TODO: This code is difficult to test locally
@@ -95,7 +99,7 @@ class Committer:
 
     async def check_access_committee(self, committee_name: str) -> None:
         if committee_name not in self.committees:
-            if user.is_admin(self.uid):
+            if self.is_admin:
                 # Admins can view all committees
                 # But we must warn them when the committee is not one of their own
                 # TODO: As above, this code is difficult to test locally
