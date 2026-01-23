@@ -14,6 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+
 import asyncio
 import collections
 import dataclasses
@@ -23,8 +24,10 @@ import ldap3
 import ldap3.utils.conv as conv
 import ldap3.utils.dn as dn
 
+LDAP_ROOT_BASE: Final[str] = "cn=infrastructure-root,ou=groups,ou=services,dc=apache,dc=org"
 LDAP_SEARCH_BASE: Final[str] = "ou=people,dc=apache,dc=org"
 LDAP_SERVER_HOST: Final[str] = "ldap-eu.apache.org"
+LDAP_TOOLING_BASE: Final[str] = "cn=tooling,ou=groups,ou=services,dc=apache,dc=org"
 
 
 class Search:
@@ -94,6 +97,48 @@ class SearchParameters:
     email_only: bool = False
 
 
+async def fetch_admin_users() -> frozenset[str]:
+    import atr.log as log
+
+    credentials = get_bind_credentials()
+    if credentials is None:
+        log.warning("LDAP bind DN or password not configured, returning empty admin set")
+        return frozenset()
+
+    bind_dn, bind_password = credentials
+
+    def _query_ldap() -> frozenset[str]:
+        users: set[str] = set()
+        with Search(bind_dn, bind_password) as ldap_search:
+            for base in (LDAP_ROOT_BASE, LDAP_TOOLING_BASE):
+                try:
+                    result = ldap_search.search(ldap_base=base, ldap_scope="BASE")
+                    if (not result) or (len(result) != 1):
+                        continue
+                    members = result[0].get("member", [])
+                    if not isinstance(members, list):
+                        continue
+                    for member_dn in members:
+                        parsed = parse_dn(member_dn)
+                        uids = parsed.get("uid", [])
+                        if uids:
+                            users.add(uids[0])
+                except Exception as e:
+                    log.warning(f"Failed to query LDAP group {base}: {e}")
+        return frozenset(users)
+
+    return await asyncio.to_thread(_query_ldap)
+
+
+def get_bind_credentials() -> tuple[str, str] | None:
+    import atr.config as config
+
+    conf = config.get()
+    if conf.LDAP_BIND_DN and conf.LDAP_BIND_PASSWORD:
+        return (conf.LDAP_BIND_DN, conf.LDAP_BIND_PASSWORD)
+    return None
+
+
 async def github_to_apache(github_numeric_uid: int) -> str:
     import atr.config as config
 
@@ -116,9 +161,8 @@ async def github_to_apache(github_numeric_uid: int) -> str:
 def parse_dn(dn_string: str) -> dict[str, list[str]]:
     parsed = collections.defaultdict(list)
     parts = dn.parse_dn(dn_string)
-    for part in parts:
-        for attr, value in part:
-            parsed[attr].append(value)
+    for attr, value, _ in parts:
+        parsed[attr].append(value)
     return dict(parsed)
 
 

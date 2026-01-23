@@ -1,0 +1,68 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+import pytest
+
+import atr.ldap as ldap
+
+
+@pytest.fixture
+def ldap_configured() -> bool:
+    return ldap.get_bind_credentials() is not None
+
+
+@pytest.mark.asyncio
+async def test_fetch_admin_users_contains_only_nonempty_strings(ldap_configured: bool):
+    _skip_if_unavailable(ldap_configured)
+    admins = await ldap.fetch_admin_users()
+    assert all(isinstance(uid, str) and uid for uid in admins)
+
+
+@pytest.mark.asyncio
+async def test_fetch_admin_users_includes_wave(ldap_configured: bool):
+    _skip_if_unavailable(ldap_configured)
+    admins = await ldap.fetch_admin_users()
+    assert "wave" in admins
+
+
+@pytest.mark.asyncio
+async def test_fetch_admin_users_is_idempotent(ldap_configured: bool):
+    # Could, of course, fail in rare situations
+    _skip_if_unavailable(ldap_configured)
+    admins1 = await ldap.fetch_admin_users()
+    admins2 = await ldap.fetch_admin_users()
+    assert admins1 == admins2
+
+
+@pytest.mark.asyncio
+async def test_fetch_admin_users_returns_frozenset(ldap_configured: bool):
+    _skip_if_unavailable(ldap_configured)
+    admins = await ldap.fetch_admin_users()
+    assert isinstance(admins, frozenset)
+
+
+@pytest.mark.asyncio
+async def test_fetch_admin_users_returns_reasonable_count(ldap_configured: bool):
+    _skip_if_unavailable(ldap_configured)
+    admins = await ldap.fetch_admin_users()
+    assert len(admins) > 1
+    assert len(admins) < 100
+
+
+def _skip_if_unavailable(ldap_configured: bool) -> None:
+    if not ldap_configured:
+        pytest.skip("LDAP not configured")
