@@ -102,7 +102,7 @@ In templates, include the CSRF token in every form:
 </form>
 ```
 
-The CSRF token is tied to the user's session and validated on form submission. Requests without a valid CSRF token are rejected.
+The CSRF token is tied to the user's session and validated on form submission. Requests without a valid CSRF token are rejected. When using the form module renderer, the CSRF token is added automatically.
 
 ## Validation rules by input type
 

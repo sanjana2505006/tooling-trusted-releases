@@ -39,7 +39,7 @@ ATR recognizes the following roles, derived from ASF LDAP:
 
 * **Committer**: Any authenticated ASF committer. Can create Personal Access Tokens and view their own committees and projects. Determined by existence in LDAP `ou=people,dc=apache,dc=org`.
 
-* **Project Participant**: A committer who is a member of a specific project (has commit access). Can start releases, upload artifacts, and cast votes for that project. Determined by the `member` attribute in the project's LDAP group.
+* **Project Participant**: A committer who is a member of a specific project. Can start releases, upload artifacts, and cast votes for that project. Determined by the `member` attribute in the project's LDAP group.
 
 * **PMC Member**: A committer who is on the PMC (Project Management Committee) for a specific committee. Has all participant permissions plus can resolve votes, finish releases, configure project settings, and manage signing keys. Determined by the `owner` attribute in the committee's LDAP group.
 
