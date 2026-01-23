@@ -396,6 +396,8 @@ def _app_setup_request_lifecycle(app: base.QuartApp) -> None:
         if session is not None:
             log.add_context(user_id=session.uid)
 
+        log.debug("headers", **quart.request.headers)
+
     @app.after_request
     async def log_request(response: quart.Response) -> quart.Response:
         logger.info(

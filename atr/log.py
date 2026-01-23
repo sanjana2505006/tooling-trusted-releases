@@ -94,20 +94,20 @@ def clear_context():
     structlog.contextvars.clear_contextvars()
 
 
-def critical(msg: str) -> None:
-    _event(logging.CRITICAL, msg)
+def critical(msg: str, **kwargs) -> None:
+    _event(logging.CRITICAL, msg, **kwargs)
 
 
-def debug(msg: str) -> None:
-    _event(logging.DEBUG, msg)
+def debug(msg: str, **kwargs) -> None:
+    _event(logging.DEBUG, msg, **kwargs)
 
 
-def error(msg: str) -> None:
-    _event(logging.ERROR, msg)
+def error(msg: str, **kwargs) -> None:
+    _event(logging.ERROR, msg, **kwargs)
 
 
-def exception(msg: str) -> None:
-    _event(logging.ERROR, msg, exc_info=True)
+def exception(msg: str, **kwargs) -> None:
+    _event(logging.ERROR, msg, exc_info=True, **kwargs)
 
 
 def get_recent_logs() -> list[str] | None:
@@ -117,8 +117,8 @@ def get_recent_logs() -> list[str] | None:
         return list(_global_recent_logs)
 
 
-def info(msg: str) -> None:
-    _event(logging.INFO, msg)
+def info(msg: str, **kwargs) -> None:
+    _event(logging.INFO, msg, **kwargs)
 
 
 def create_debug_handler() -> logging.Handler:
@@ -134,9 +134,9 @@ def interface_name(depth: int = 1) -> str:
     return caller_name(depth=depth)
 
 
-def log(level: int, msg: str) -> None:
+def log(level: int, msg: str, **kwargs) -> None:
     # Custom log level
-    _event(level, msg)
+    _event(level, msg, **kwargs)
 
 
 def performance(msg: str) -> None:
@@ -175,15 +175,15 @@ def python_repr(object_name: str) -> str:
 #     _event(logging.INFO, f"{msg} {encoded_ciphertext}")
 
 
-def warning(msg: str) -> None:
-    _event(logging.WARNING, msg)
+def warning(msg: str, **kwargs) -> None:
+    _event(logging.WARNING, msg, **kwargs)
 
 
 def _caller_logger(depth: int = 1) -> logging.Logger:
     return structlog.getLogger(caller_name(depth))
 
 
-def _event(level: int, msg: str, stacklevel: int = 3, exc_info: bool = False) -> None:
+def _event(level: int, msg: str, stacklevel: int = 3, exc_info: bool = False, **kwargs) -> None:
     logger = _caller_logger(depth=3)
     # Stack level 1 is *here*, 2 is the caller, 3 is the caller of the caller
     # I.e. _event (1), log.* (2), actual caller (3)
@@ -193,7 +193,7 @@ def _event(level: int, msg: str, stacklevel: int = 3, exc_info: bool = False) ->
     # https://github.com/apache/tooling-trusted-releases/issues/346
     # The stacklevel and exc_info keyword arguments are not available as parameters
     # Therefore this should be safe even with an untrusted msg template
-    logger.log(level, msg, stacklevel=stacklevel, exc_info=exc_info)
+    logger.log(level, msg, stacklevel=stacklevel, exc_info=exc_info, **kwargs)
 
 
 def _performance_logger() -> logging.Logger:
