@@ -386,7 +386,7 @@ def _app_setup_logging(app: base.QuartApp, config_mode: config.Mode, app_config:
             log.info(f"STATE_DIR    = {app_config.STATE_DIR}")
 
 
-def _app_setup_rate_limits(app: base.QuartApp):
+def _app_setup_rate_limits(app: base.QuartApp, conf: type[config.AppConfig]):
     async def get_rate_limit_key() -> str:
         """Authenticated users -> pool per user"""
         session = await asfquart.session.read()
@@ -394,14 +394,15 @@ def _app_setup_rate_limits(app: base.QuartApp):
             return f"user:{session.uid}"
         return f"ip:{quart.request.remote_addr}"
 
-    rate_limiter.RateLimiter(
-        app,
-        default_limits=[
-            rate_limiter.RateLimit(100, datetime.timedelta(minutes=1)),
-            rate_limiter.RateLimit(1000, datetime.timedelta(hours=1)),
-        ],
-        key_function=get_rate_limit_key,
-    )
+    if not conf.ALLOW_TESTS:
+        rate_limiter.RateLimiter(
+            app,
+            default_limits=[
+                rate_limiter.RateLimit(100, datetime.timedelta(minutes=1)),
+                rate_limiter.RateLimit(1000, datetime.timedelta(hours=1)),
+            ],
+            key_function=get_rate_limit_key,
+        )
 
 
 def _app_setup_request_lifecycle(app: base.QuartApp) -> None:
@@ -502,7 +503,7 @@ def _create_app(app_config: type[config.AppConfig]) -> base.QuartApp:
     _app_setup_api_docs(app)
     quart_wtf.CSRFProtect(app)
 
-    _app_setup_rate_limits(app)
+    _app_setup_rate_limits(app, app_config)
     _app_setup_logging(app, config_mode, app_config)
     db.init_database(app)
     _register_routes(app)
