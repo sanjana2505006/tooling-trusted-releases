@@ -92,49 +92,66 @@ def main() -> None:
     log.info("Exiting worker process")
 
 
-def _setup_logging() -> None:
-    import logging.handlers
+async def _execute_check_task(
+    handler: Callable[..., Awaitable[results.Results | None]],
+    task_args: list[str] | dict[str, Any],
+    task_id: int,
+    task_type: str,
+) -> results.Results | None:
+    log.debug(f"Handler {handler.__name__} expects checks.FunctionArguments, fetching full task details")
+    async with db.session() as data:
+        task_obj = await data.task(id=task_id).demand(ValueError(f"Task {task_id} disappeared during processing"))
 
-    import structlog
+    # Validate required fields from the Task object itself
+    if task_obj.project_name is None:
+        raise ValueError(f"Task {task_id} is missing required project_name")
+    if task_obj.version_name is None:
+        raise ValueError(f"Task {task_id} is missing required version_name")
+    if task_obj.revision_number is None:
+        raise ValueError(f"Task {task_id} is missing required revision_number")
+
+    if not isinstance(task_args, dict):
+        raise TypeError(
+            f"Task {task_id} ({task_type}) has non-dict raw args {task_args} which should represent keyword_args"
+        )
+
+    async def recorder_factory() -> checks.Recorder:
+        return await checks.Recorder.create(
+            checker=handler,
+            project_name=task_obj.project_name or "",
+            version_name=task_obj.version_name or "",
+            revision_number=task_obj.revision_number or "",
+            primary_rel_path=task_obj.primary_rel_path,
+        )
+
+    function_arguments = checks.FunctionArguments(
+        recorder=recorder_factory,
+        asf_uid=task_obj.asf_uid,
+        project_name=task_obj.project_name or "",
+        version_name=task_obj.version_name or "",
+        revision_number=task_obj.revision_number,
+        primary_rel_path=task_obj.primary_rel_path,
+        extra_args=task_args,
+    )
+    log.debug(f"Calling {handler.__name__} with structured arguments: {function_arguments}")
+    handler_result = await handler(function_arguments)
+    return handler_result
+
+
+def _setup_logging() -> None:
+    import logging
+
+    import atr.loggers as loggers
 
     os.makedirs("logs", exist_ok=True)
-    # Configure logging
-    shared_processors: list[structlog.types.Processor] = [
-        structlog.contextvars.merge_contextvars,
-        structlog.stdlib.add_log_level,
-        structlog.stdlib.add_logger_name,
-        structlog.stdlib.PositionalArgumentsFormatter(),
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.UnicodeDecoder(),
-    ]
+
+    shared_processors = loggers.shared_processors()
     output_handler = logging.FileHandler("logs/atr-worker.log")
-    renderer = structlog.processors.JSONRenderer()
-    output_handler.setFormatter(
-        structlog.stdlib.ProcessorFormatter(
-            processors=[
-                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-                renderer,
-            ],
-            foreign_pre_chain=shared_processors,
-        )
-    )
+    output_handler.setFormatter(loggers.create_json_formatter(shared_processors))
 
     logging.basicConfig(level=logging.INFO, handlers=[output_handler], force=True)
 
-    structlog.configure(
-        processors=[
-            *shared_processors,
-            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
-        ],
-        wrapper_class=structlog.stdlib.BoundLogger,
-        context_class=dict,
-        logger_factory=structlog.stdlib.LoggerFactory(),
-        cache_logger_on_first_use=True,
-    )
-
-
-# Task functions
+    loggers.configure_structlog(shared_processors)
 
 
 async def _task_next_claim() -> tuple[int, str, list[str] | dict[str, Any], str] | None:
@@ -226,52 +243,6 @@ async def _task_process(task_id: int, task_type: str, task_args: list[str] | dic
     await _task_result_process(task_id, task_results, status, error)
 
 
-async def _execute_check_task(
-    handler: Callable[..., Awaitable[results.Results | None]],
-    task_args: list[str] | dict[str, Any],
-    task_id: int,
-    task_type: str,
-) -> results.Results | None:
-    log.debug(f"Handler {handler.__name__} expects checks.FunctionArguments, fetching full task details")
-    async with db.session() as data:
-        task_obj = await data.task(id=task_id).demand(ValueError(f"Task {task_id} disappeared during processing"))
-
-    # Validate required fields from the Task object itself
-    if task_obj.project_name is None:
-        raise ValueError(f"Task {task_id} is missing required project_name")
-    if task_obj.version_name is None:
-        raise ValueError(f"Task {task_id} is missing required version_name")
-    if task_obj.revision_number is None:
-        raise ValueError(f"Task {task_id} is missing required revision_number")
-
-    if not isinstance(task_args, dict):
-        raise TypeError(
-            f"Task {task_id} ({task_type}) has non-dict raw args {task_args} which should represent keyword_args"
-        )
-
-    async def recorder_factory() -> checks.Recorder:
-        return await checks.Recorder.create(
-            checker=handler,
-            project_name=task_obj.project_name or "",
-            version_name=task_obj.version_name or "",
-            revision_number=task_obj.revision_number or "",
-            primary_rel_path=task_obj.primary_rel_path,
-        )
-
-    function_arguments = checks.FunctionArguments(
-        recorder=recorder_factory,
-        asf_uid=task_obj.asf_uid,
-        project_name=task_obj.project_name or "",
-        version_name=task_obj.version_name or "",
-        revision_number=task_obj.revision_number,
-        primary_rel_path=task_obj.primary_rel_path,
-        extra_args=task_args,
-    )
-    log.debug(f"Calling {handler.__name__} with structured arguments: {function_arguments}")
-    handler_result = await handler(function_arguments)
-    return handler_result
-
-
 async def _task_result_process(
     task_id: int, task_results: results.Results | None, status: sql.TaskStatus, error: str | None = None
 ) -> None:
@@ -288,9 +259,6 @@ async def _task_result_process(
 
                 if (status == task.FAILED) and error:
                     task_obj.error = error
-
-
-# Worker functions
 
 
 async def _worker_loop_run() -> None:

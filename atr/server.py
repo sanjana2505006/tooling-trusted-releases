@@ -305,16 +305,9 @@ def _app_setup_logging(app: base.QuartApp, config_mode: config.Mode, app_config:
 
     import structlog
 
-    # Shared processors for structlog (run before formatting)
-    shared_processors: list[structlog.types.Processor] = [
-        structlog.contextvars.merge_contextvars,
-        structlog.stdlib.add_log_level,
-        structlog.stdlib.add_logger_name,
-        structlog.stdlib.PositionalArgumentsFormatter(),
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.UnicodeDecoder(),
-    ]
+    import atr.loggers as loggers
+
+    shared_processors = loggers.shared_processors()
 
     # Output handler: pretty console for dev (Debug and Allow Tests), JSON for non-dev (Docker, etc.)
     output_handler = logging.StreamHandler(sys.stderr)
@@ -322,16 +315,9 @@ def _app_setup_logging(app: base.QuartApp, config_mode: config.Mode, app_config:
         renderer: structlog.types.Processor = structlog.dev.ConsoleRenderer(colors=True)
     else:
         renderer = structlog.processors.JSONRenderer()
-    output_handler.setFormatter(
-        structlog.stdlib.ProcessorFormatter(
-            processors=[
-                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-                renderer,
-            ],
-            foreign_pre_chain=shared_processors,
-        )
-    )
     # Queue-based logging for thread safety
+    output_handler.setFormatter(loggers.create_output_formatter(shared_processors, renderer))
+
     log_queue: queue.Queue[logging.LogRecord] = queue.Queue(-1)
     handlers: list[logging.Handler] = [output_handler]
     if util.is_dev_environment():
@@ -347,60 +333,24 @@ def _app_setup_logging(app: base.QuartApp, config_mode: config.Mode, app_config:
         force=True,
     )
 
-    structlog.configure(
-        processors=[
-            *shared_processors,
-            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
-        ],
-        wrapper_class=structlog.stdlib.BoundLogger,
-        context_class=dict,
-        logger_factory=structlog.stdlib.LoggerFactory(),
-        cache_logger_on_first_use=True,
-    )
+    loggers.configure_structlog(shared_processors)
 
     # Audit logger - JSON to dedicated file via queue
-    audit_handler = logging.FileHandler(app_config.STORAGE_AUDIT_LOG_FILE, encoding="utf-8")
-    audit_handler.setFormatter(
-        structlog.stdlib.ProcessorFormatter(
-            processors=[
-                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-                structlog.processors.JSONRenderer(),
-            ],
-            foreign_pre_chain=shared_processors,
-        )
+    audit_listener = loggers.setup_dedicated_file_logger(
+        "atr.storage.audit",
+        app_config.STORAGE_AUDIT_LOG_FILE,
+        shared_processors,
     )
-    audit_queue: queue.Queue[logging.LogRecord] = queue.Queue(-1)
-    audit_listener = logging.handlers.QueueListener(audit_queue, audit_handler)
-    audit_listener.start()
     app.extensions["audit_listener"] = audit_listener
 
-    audit_logger = logging.getLogger("atr.storage.audit")
-    audit_logger.setLevel(logging.INFO)
-    audit_logger.handlers.clear()
-    audit_logger.addHandler(logging.handlers.QueueHandler(audit_queue))
-    audit_logger.propagate = False
-
     # Request logs
-    request_handler = logging.FileHandler(app_config.REQUEST_LOG_FILE, encoding="utf-8")
-    request_handler.setFormatter(
-        structlog.stdlib.ProcessorFormatter(
-            processors=[
-                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-                structlog.processors.JSONRenderer(),
-            ],
-            foreign_pre_chain=shared_processors,
-        )
+    request_listener = loggers.setup_dedicated_file_logger(
+        "atr.request",
+        app_config.REQUEST_LOG_FILE,
+        shared_processors,
+        queue_handler_class=log.StructlogQueueHandler,
     )
-    request_queue: queue.Queue[logging.LogRecord] = queue.Queue(-1)
-    request_listener = logging.handlers.QueueListener(request_queue, request_handler)
-    request_listener.start()
     app.extensions["request_listener"] = request_listener
-
-    request_logger = logging.getLogger("atr.request")
-    request_logger.setLevel(logging.INFO)
-    request_logger.handlers.clear()
-    request_logger.addHandler(log.StructlogQueueHandler(request_queue))
-    request_logger.propagate = False
 
     # Enable debug output for atr.* in DEBUG mode
     if config_mode == config.Mode.Debug:
