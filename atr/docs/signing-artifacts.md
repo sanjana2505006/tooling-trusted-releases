@@ -4,7 +4,7 @@
 
 **Prev**: `2.1.` [Components](components)
 
-**Next**: `3.1.` [Running the server](running-the-server)
+**Next**: `2.3.` [License checks](license-checks)
 
 **Sections**:
 
