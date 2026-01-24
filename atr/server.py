@@ -21,6 +21,8 @@ import asyncio
 import contextlib
 import datetime
 import fcntl
+import logging
+import logging.handlers
 import multiprocessing
 import os
 import pathlib
@@ -299,6 +301,13 @@ def _app_setup_lifecycle(app: base.QuartApp, app_config: type[config.AppConfig])
         app.background_tasks.clear()
 
 
+class SSLShutdownFilter(logging.Filter):
+    """Filter out SSL shutdown timeout noise."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "SSL shutdown timed out" not in record.getMessage()
+
+
 def _app_setup_logging(app: base.QuartApp, config_mode: config.Mode, app_config: type[config.AppConfig]) -> None:
     """Setup application logging with structlog and queue-based handlers."""
     import logging.handlers
@@ -334,6 +343,9 @@ def _app_setup_logging(app: base.QuartApp, config_mode: config.Mode, app_config:
     )
 
     loggers.configure_structlog(shared_processors)
+
+    # Add filter to the root logger to catch noise from dependencies like uvloop
+    logging.getLogger().addFilter(SSLShutdownFilter())
 
     # Audit logger - JSON to dedicated file via queue
     audit_listener = loggers.setup_dedicated_file_logger(

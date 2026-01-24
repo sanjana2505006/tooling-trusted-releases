@@ -113,7 +113,11 @@ async def stage(
     except ValueError:
         return _json_error("Invalid session token", 400)
 
-    files = await quart.request.files
+    try:
+        files = await quart.request.files
+    except (asyncio.CancelledError, OSError) as e:
+        log.warning(f"Connection closed during file staging: {e!s}")
+        return _json_error("Connection closed", 400)
     file = files.get("file")
     if (not file) or (not file.filename):
         return _json_error("No file provided", 400)

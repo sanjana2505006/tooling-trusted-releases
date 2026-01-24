@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import enum
 import json
 import pathlib
@@ -34,6 +35,7 @@ import quart.datastructures as datastructures
 import quart_wtf.utils as utils
 
 import atr.htm as htm
+import atr.log as log
 import atr.models.schema as schema
 import atr.util as util
 
@@ -177,8 +179,17 @@ def name_and_label(form_cls: type[Form], i: int, loc: tuple[str | int, ...]) -> 
 
 
 async def quart_request() -> dict[str, Any]:
-    form_data = await quart.request.form
-    files_data = await quart.request.files
+    try:
+        form_data = await quart.request.form
+        files_data = await quart.request.files
+    except (asyncio.CancelledError, OSError) as e:
+        # These errors often occur when a client disconnects during an upload
+        # We catch them here to avoid orphaning the process and generating noise in the logs
+        log.warning(f"Connection closed during form parsing: {e!s}")
+        return {}
+    except Exception:
+        log.exception("Unexpected error during form parsing")
+        return {}
 
     combined_data = {}
     for key in form_data.keys():
